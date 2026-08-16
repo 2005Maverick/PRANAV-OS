@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "**/styles.css"
+        ],
+        "createdAt": "2026-08-16T21:44:28.999Z",
+        "reason": "Locked design system: domain-color left edge on time-block cards (user-approved reference)"
+      }
+    ]
+  }
+}
