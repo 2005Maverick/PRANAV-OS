@@ -1,40 +1,12 @@
 import { useEffect, useState } from 'react'
+import Week from './Week.jsx'
+import Wall from './Wall.jsx'
+import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
 
 // ?demo — a fully-lived-in day so the design can be judged before real data exists
 const DEMO = typeof window !== 'undefined' && window.location.search.includes('demo')
-
-const MOCK_TODAY = {
-  date: '2026-08-18', now: '15:42', status: 'confirmed',
-  energy_note: 'built for 5h40 of sleep — nap repaid at 14:30',
-  blocks: [
-    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#6E4A72', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
-    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#8C3A2E', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
-    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#565C66', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
-    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#6E4A72', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
-    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#3F6B52', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
-    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#8C3A2E', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
-    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#3E5F86', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
-    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#3E433C', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
-    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#8A6642', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
-    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#A5822B', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
-  ],
-}
-
-const MOCK_RAIL = {
-  next_fixed: { title: 'Telangana sync', at: '17:00' },
-  sleep: { hours: 5.7, debt: -2.1 },
-  floors: [
-    { slug: 'tech', name: 'Tech Learning', done: 2, target: 5, ok: false },
-    { slug: 'research', name: 'Masters & Research', done: 2, target: 3, ok: false },
-    { slug: 'gym', name: 'Gym / Health', done: 5, target: 7, ok: false },
-    { slug: 'trading', name: 'Trading', done: 5, target: 5, ok: true },
-    { slug: 'startup', name: 'Startup', done: 4, target: 4, ok: true },
-  ],
-  masters_days: 168,
-  protocol: { steps_done: 4, steps_total: 4, completed: true },
-}
 
 const HOUR_PX = 52
 
@@ -165,19 +137,28 @@ function Rail({ rail }) {
   )
 }
 
+const VIEWS = ['today', 'week', 'wall']
+
 export default function App() {
+  const [view, setView] = useState('today')
   const [today, setToday] = useState(null)
   const [rail, setRail] = useState(null)
+  const [week, setWeek] = useState(null)
+  const [wall, setWall] = useState(null)
 
   useEffect(() => {
     if (DEMO) {
       setToday(MOCK_TODAY)
       setRail(MOCK_RAIL)
+      setWeek(mkWeek())
+      setWall(mkWall())
       return
     }
     const load = () => {
       fetch(`${API}/api/today`).then((r) => r.json()).then(setToday).catch(() => {})
       fetch(`${API}/api/rail`).then((r) => r.json()).then(setRail).catch(() => {})
+      fetch(`${API}/api/week`).then((r) => r.json()).then((d) => setWeek(d.days)).catch(() => {})
+      fetch(`${API}/api/wall`).then((r) => r.json()).then((d) => setWall(d.tiles)).catch(() => {})
     }
     load()
     const id = setInterval(load, 60_000)
@@ -187,12 +168,19 @@ export default function App() {
   if (!today || !rail) return <div className="loading">Pranav OS · connecting</div>
 
   const current = today.blocks.find((b) => b.status === 'started')
+  const titles = { today: 'Today', week: 'Week', wall: 'The Wall' }
   return (
     <div className="cockpit">
       <header className="head">
         <div className="brand">
-          <h1>Today</h1>
-          <div className="sub">{today.date} · {today.status || 'no plan'}</div>
+          <h1>{titles[view]}</h1>
+          <nav className="tabs">
+            {VIEWS.map((v) => (
+              <button key={v} className={`tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+                {v}
+              </button>
+            ))}
+          </nav>
         </div>
         <div className="current">
           <div className="label">Current block</div>
@@ -206,7 +194,11 @@ export default function App() {
           </span>
         </div>
       </header>
-      <main><Timeline today={today} /></main>
+      <main>
+        {view === 'today' && <Timeline today={today} />}
+        {view === 'week' && (week ? <Week days={week} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
+        {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
+      </main>
       <Rail rail={rail} />
     </div>
   )

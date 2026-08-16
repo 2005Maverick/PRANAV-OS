@@ -40,6 +40,59 @@ async def today():
     }
 
 
+async def _day_blocks(day_id: int) -> list[dict]:
+    rows = await db.fetch(
+        """SELECT b.id, b.title, b.next_action, b.start_at, b.end_at, b.status,
+                  b.is_fixed, d.slug AS domain, d.color
+           FROM blocks b LEFT JOIN domains d ON d.id=b.domain_id
+           WHERE b.day_id=$1 ORDER BY b.start_at""", day_id)
+    return [{
+        "id": r["id"], "title": r["title"], "next_action": r["next_action"],
+        "start": r["start_at"].astimezone(config.TZ).strftime("%H:%M"),
+        "end": r["end_at"].astimezone(config.TZ).strftime("%H:%M"),
+        "status": r["status"], "fixed": r["is_fixed"],
+        "domain": r["domain"], "color": r["color"] or "#565C66",
+    } for r in rows]
+
+
+@router.get("/week")
+async def week():
+    today_d = _now().date()
+    monday = today_d - dt.timedelta(days=today_d.weekday())
+    days = []
+    for i in range(7):
+        date = monday + dt.timedelta(days=i)
+        day = await db.fetchrow("SELECT id, status FROM days WHERE date=$1", date)
+        days.append({
+            "name": date.strftime("%a"),
+            "date": date.strftime("%d"),
+            "iso": str(date),
+            "today": date == today_d,
+            "status": day["status"] if day else "—",
+            "blocks": await _day_blocks(day["id"]) if day else [],
+        })
+    return {"days": days}
+
+
+@router.get("/wall")
+async def wall(limit: int = 90):
+    rows = await db.fetch(
+        "SELECT id, date, status FROM days WHERE date < $1 ORDER BY date DESC LIMIT $2",
+        _now().date(), limit)
+    tiles = []
+    for r in reversed(rows):
+        proto = await db.fetchrow(
+            "SELECT completed FROM protocol_runs WHERE date=$1", r["date"])
+        tiles.append({
+            "date": str(r["date"]),
+            "label": r["date"].strftime("%d"),
+            "month": r["date"].strftime("%b") if r["date"].day <= 7 else None,
+            "protocol": bool(proto and proto["completed"]),
+            "blocks": await _day_blocks(r["id"]),
+        })
+    return {"tiles": tiles}
+
+
 @router.get("/rail")
 async def rail():
     now = _now()

@@ -210,3 +210,88 @@ body {
   font-family: var(--font-inst); font-size: 11px; letter-spacing: 0.2em;
   text-transform: uppercase; color: var(--faint);
 }
+
+/* ---------- nav tabs ---------- */
+.tabs { display: flex; gap: 4px; margin-top: 10px; }
+.tab {
+  font-family: var(--font-inst); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--faint);
+  background: none; border: 1px solid transparent; border-radius: 5px;
+  padding: 4px 10px; cursor: pointer;
+}
+.tab:hover { color: var(--dim); }
+.tab.on { color: var(--bone); border-color: var(--line); background: var(--ink-lift); }
+
+/* ---------- week ---------- */
+.week {
+  display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 10px;
+  padding: 28px 32px 48px; max-width: 1180px;
+}
+.wk-gutter { position: relative; margin-top: 34px; }
+.wk-h {
+  position: absolute; right: 4px; transform: translateY(-50%);
+  font-family: var(--font-inst); font-size: 10px; color: var(--faint);
+}
+.wcol-head {
+  display: flex; align-items: baseline; gap: 7px; padding: 0 2px 8px;
+}
+.wcol-head .wd { font-size: 12.5px; font-weight: 500; color: var(--dim); }
+.wcol-head .wdate { font-size: 11px; color: var(--faint); }
+.wcol.is-today .wcol-head .wd { color: var(--acid); }
+.wcol-grid {
+  position: relative; border-radius: 8px;
+  background: var(--ink-lift);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.wcol.is-today .wcol-grid { border-color: color-mix(in srgb, var(--acid) 40%, var(--line)); }
+.wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-soft); opacity: 0.6; }
+.wplane {
+  position: absolute; left: 5px; right: 5px;
+  border-radius: 5px; overflow: hidden; padding: 3px 7px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--c) 30%, var(--ink-lift)),
+    color-mix(in srgb, var(--c) 16%, var(--ink)));
+  border-left: 2px solid var(--c);
+}
+.wplane .wt {
+  display: block; font-size: 10.5px; font-weight: 500;
+  color: rgba(242,239,233,0.9);
+  white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+}
+.wplane .wtime {
+  font-family: var(--font-inst); font-size: 9px; color: rgba(242,239,233,0.55);
+}
+.wplane.done { opacity: 0.55; }
+.wplane.skipped, .wplane.sacrificed { opacity: 0.28; }
+.wplane.fixed { border-left-style: double; border-left-width: 4px; }
+.wcol-foot {
+  padding: 7px 2px 0; font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--faint); text-align: center;
+}
+
+/* ---------- the wall ---------- */
+.wall { padding: 28px 40px 56px; max-width: 1100px; }
+.wall-head { margin-bottom: 24px; }
+.wall-head .voice {
+  font-family: var(--font-voice); font-style: italic; font-size: 19px; color: var(--dim);
+}
+.wall-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 12px;
+}
+.tile { cursor: default; }
+.tile-canvas {
+  position: relative; height: 96px; border-radius: 7px; overflow: hidden;
+  background: var(--ink-lift); border: 1px solid var(--line-soft);
+  transition: border-color 120ms ease;
+}
+.tile:hover .tile-canvas { border-color: var(--dim); }
+.tile.empty .tile-canvas { background: var(--ink); border-style: dashed; }
+.tbar { position: absolute; left: 14%; right: 14%; border-radius: 2px; }
+.tbar.skipped, .tbar.sacrificed { opacity: 0.25; left: 30%; right: 30%; }
+.tile-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 2px 0;
+}
+.tile-foot .mono { font-size: 9.5px; color: var(--faint); letter-spacing: 0.08em; }
+.pdot { width: 5px; height: 5px; border-radius: 50%; background: var(--acid); opacity: 0.8; }
