@@ -9,16 +9,16 @@ const MOCK_TODAY = {
   date: '2026-08-18', now: '15:42', status: 'confirmed',
   energy_note: 'built for 5h40 of sleep — nap repaid at 14:30',
   blocks: [
-    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#5B3A5E', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
-    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#7A2E2A', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
-    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#4A4E57', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
-    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#5B3A5E', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
-    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#2E5339', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
-    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#7A2E2A', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
-    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#2F4A6B', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
-    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#3A3F38', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
-    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#6B4A2F', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
-    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#8A6A1F', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
+    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#6E4A72', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
+    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#8C3A2E', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
+    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#565C66', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
+    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#6E4A72', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
+    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#3F6B52', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
+    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#8C3A2E', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
+    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#3E5F86', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
+    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#3E433C', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
+    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#8A6642', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
+    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#A5822B', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
   ],
 }
 
@@ -112,7 +112,7 @@ function Rail({ rail }) {
             <div className="small">last night: {rail.sleep.hours ? rail.sleep.hours.toFixed(1) + 'h' : '—'}</div>
           </>
         ) : (
-          <div className="small">no sleep data yet — say “sleeping” tonight</div>
+          <div className="small">no sleep data yet — say "sleeping" tonight</div>
         )}
       </div>
 
@@ -138,9 +138,7 @@ function Rail({ rail }) {
       <div className="inst">
         <div className="label">Arcs</div>
         {rail.masters_days != null ? (
-          <>
-            <div className="big acid">{rail.masters_days}<span className="unit">DAYS · MASTERS</span></div>
-          </>
+          <div className="big acid">{rail.masters_days}<span className="unit">DAYS · MASTERS</span></div>
         ) : (
           <div className="small">masters date not set — onboarding pending</div>
         )}
