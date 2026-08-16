@@ -47,11 +47,10 @@ export default function Wall({ tiles }) {
   }
   if (week.length) { while (week.length < 7) week.push(null); weeks.push(week) }
 
-  let prevMonth = -1
-  const rows = weeks.map((w) => {
-    const first = w.find(Boolean)
-    const label = first && first._m !== prevMonth ? MONTHS[first._m] : null
-    if (first) prevMonth = first._m
+  const rows = weeks.map((w, i) => {
+    const firstOfMonth = w.find((t) => t && t._day === 1)
+    const label = firstOfMonth ? MONTHS[firstOfMonth._m]
+      : i === 0 ? MONTHS[w.find(Boolean)?._m] : null
     return { w, label }
   })
 

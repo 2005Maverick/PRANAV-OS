@@ -283,18 +283,21 @@ body {
 /* ---------- the wall ---------- */
 .wall { padding: 28px 44px 56px; }
 .wall-head {
-  margin-bottom: 26px;
+  margin: 0 auto 26px; max-width: 1080px;
   display: flex; align-items: baseline; justify-content: space-between;
-  gap: 24px; flex-wrap: wrap; max-width: 720px;
+  gap: 24px; flex-wrap: wrap;
 }
 .wall-head .voice {
   font-family: var(--font-voice); font-style: italic; font-size: 19px; color: var(--dim);
 }
 .wall-stats { font-size: 10.5px; color: var(--faint); letter-spacing: 0.06em; }
 
-.wall-cal { display: flex; flex-direction: column; gap: 9px; }
+.wall-cal {
+  display: flex; flex-direction: column; gap: 10px;
+  max-width: 1080px; margin: 0 auto;
+}
 .wall-dow, .wall-row {
-  display: grid; grid-template-columns: 40px repeat(7, 74px); gap: 9px;
+  display: grid; grid-template-columns: 44px repeat(7, 1fr); gap: 10px;
   align-items: start;
 }
 .wall-dow span {
@@ -307,7 +310,7 @@ body {
 .tile-slot { min-height: 10px; }
 .tile { cursor: default; }
 .tile-canvas {
-  position: relative; height: 64px; border-radius: 6px; overflow: hidden;
+  position: relative; aspect-ratio: 7 / 5; border-radius: 6px; overflow: hidden;
   background: var(--ink-lift); border: 1px solid var(--line-soft);
   transition: border-color 120ms ease, transform 120ms ease;
 }
