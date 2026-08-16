@@ -7,6 +7,7 @@ function mins(hhmm) {
 }
 
 function Tile({ t }) {
+  if (!t) return <div className="tile-slot" />
   const done = t.blocks.filter((b) => b.status === 'done').length
   const title = t.blocks.length
     ? `${t.date} · ${done}/${t.blocks.length} blocks done${t.protocol ? ' · protocol ✓' : ''}`
@@ -16,7 +17,7 @@ function Tile({ t }) {
       <div className="tile-canvas">
         {t.blocks.map((b) => {
           const top = ((mins(b.start) - DAY_START) / (DAY_END - DAY_START)) * 100
-          const h = Math.max(((mins(b.end) - mins(b.start)) / (DAY_END - DAY_START)) * 100, 2)
+          const h = Math.max(((mins(b.end) - mins(b.start)) / (DAY_END - DAY_START)) * 100, 3)
           return (
             <span key={b.id} className={`tbar ${b.status}`}
               style={{ top: `${top}%`, height: `${h}%`, background: b.color }} />
@@ -24,21 +25,60 @@ function Tile({ t }) {
         })}
       </div>
       <div className="tile-foot">
-        <span className="mono">{t.month ? `${t.month} ` : ''}{t.label}</span>
+        <span className="mono">{t.label}</span>
         {t.protocol && <span className="pdot" />}
       </div>
     </div>
   )
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 export default function Wall({ tiles }) {
+  // calendar-align: rows are weeks, columns Mon..Sun
+  const weeks = []
+  let week = []
+  for (const t of tiles) {
+    const d = new Date(t.date + 'T00:00:00')
+    const wd = (d.getDay() + 6) % 7 // Mon=0
+    if (week.length === 0) for (let i = 0; i < wd; i++) week.push(null)
+    week.push({ ...t, _m: d.getMonth(), _day: d.getDate() })
+    if (week.length === 7) { weeks.push(week); week = [] }
+  }
+  if (week.length) { while (week.length < 7) week.push(null); weeks.push(week) }
+
+  let prevMonth = -1
+  const rows = weeks.map((w) => {
+    const first = w.find(Boolean)
+    const label = first && first._m !== prevMonth ? MONTHS[first._m] : null
+    if (first) prevMonth = first._m
+    return { w, label }
+  })
+
+  const composed = tiles.filter((t) => t.blocks.length).length
+  const proto = tiles.filter((t) => t.protocol).length
+  const doneBlocks = tiles.reduce((a, t) => a + t.blocks.filter((b) => b.status === 'done').length, 0)
+
   return (
     <div className="wall">
       <div className="wall-head">
         <span className="voice">your discipline, rendered — one tile per closed day</span>
+        <span className="wall-stats mono">
+          {tiles.length} days · {Math.round((composed / (tiles.length || 1)) * 100)}% composed ·
+          {' '}{Math.round((proto / (tiles.length || 1)) * 100)}% protocol · {doneBlocks} blocks done
+        </span>
       </div>
-      <div className="wall-grid">
-        {tiles.map((t) => <Tile key={t.date} t={t} />)}
+      <div className="wall-cal">
+        <div className="wall-dow">
+          <span />
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} className="mono">{d}</span>)}
+        </div>
+        {rows.map(({ w, label }, i) => (
+          <div key={i} className="wall-row">
+            <span className="wall-month mono">{label || ''}</span>
+            {w.map((t, j) => <Tile key={t ? t.date : `e${j}`} t={t} />)}
+          </div>
+        ))}
       </div>
     </div>
   )

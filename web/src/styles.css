@@ -281,27 +281,43 @@ body {
 .spectrum .sp-dim { opacity: 0.25; }
 
 /* ---------- the wall ---------- */
-.wall { padding: 28px 40px 56px; max-width: 1100px; }
-.wall-head { margin-bottom: 24px; }
+.wall { padding: 28px 44px 56px; }
+.wall-head {
+  margin-bottom: 26px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap; max-width: 720px;
+}
 .wall-head .voice {
   font-family: var(--font-voice); font-style: italic; font-size: 19px; color: var(--dim);
 }
-.wall-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 12px;
+.wall-stats { font-size: 10.5px; color: var(--faint); letter-spacing: 0.06em; }
+
+.wall-cal { display: flex; flex-direction: column; gap: 9px; }
+.wall-dow, .wall-row {
+  display: grid; grid-template-columns: 40px repeat(7, 74px); gap: 9px;
+  align-items: start;
 }
+.wall-dow span {
+  text-align: center; font-size: 9.5px; color: var(--faint); letter-spacing: 0.1em;
+}
+.wall-month {
+  font-size: 10px; color: var(--dim); letter-spacing: 0.1em;
+  text-transform: uppercase; padding-top: 26px; text-align: right; padding-right: 4px;
+}
+.tile-slot { min-height: 10px; }
 .tile { cursor: default; }
 .tile-canvas {
-  position: relative; height: 96px; border-radius: 7px; overflow: hidden;
+  position: relative; height: 64px; border-radius: 6px; overflow: hidden;
   background: var(--ink-lift); border: 1px solid var(--line-soft);
-  transition: border-color 120ms ease;
+  transition: border-color 120ms ease, transform 120ms ease;
 }
-.tile:hover .tile-canvas { border-color: var(--dim); }
+.tile:hover .tile-canvas { border-color: var(--dim); transform: translateY(-1px); }
 .tile.empty .tile-canvas { background: var(--ink); border-style: dashed; }
-.tbar { position: absolute; left: 14%; right: 14%; border-radius: 2px; }
-.tbar.skipped, .tbar.sacrificed { opacity: 0.25; left: 30%; right: 30%; }
+.tbar { position: absolute; left: 12%; right: 12%; border-radius: 1.5px; }
+.tbar.skipped, .tbar.sacrificed { opacity: 0.25; left: 32%; right: 32%; }
 .tile-foot {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 2px 0;
+  padding: 4px 2px 0;
 }
-.tile-foot .mono { font-size: 9.5px; color: var(--faint); letter-spacing: 0.08em; }
-.pdot { width: 5px; height: 5px; border-radius: 50%; background: var(--acid); opacity: 0.8; }
+.tile-foot .mono { font-size: 9px; color: var(--faint); letter-spacing: 0.08em; }
+.pdot { width: 4px; height: 4px; border-radius: 50%; background: var(--acid); opacity: 0.85; }
