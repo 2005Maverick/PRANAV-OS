@@ -49,7 +49,10 @@ function Plane({ b, dayStart }) {
   const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
   return (
     <div className={cls} style={{ top, height, background: b.color + 'CC' }}>
-      <div className="t">{b.domain ? `${b.domain} · ` : ''}{b.title}</div>
+      <div className="row">
+        <span className="t">{b.domain ? `${b.domain} · ` : ''}{b.title}</span>
+        <span className="time">{b.start}–{b.end}</span>
+      </div>
       {b.next_action && height >= 60 && <div className="na">→ {b.next_action}</div>}
     </div>
   )
