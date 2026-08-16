@@ -16,7 +16,7 @@ const MOCK_TODAY = {
     { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#2E5339', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
     { id: 6, title: 'Telangana sync', domain: 'internship', color: '#7A2E2A', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
     { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#2F4A6B', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
-    { id: 8, title: 'Netflix — 1 ep (committed)', domain: 'gym', color: '#3A3F38', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
+    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#3A3F38', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
     { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#6B4A2F', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
     { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#8A6A1F', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
   ],
@@ -36,29 +36,26 @@ const MOCK_RAIL = {
   protocol: { steps_done: 4, steps_total: 4, completed: true },
 }
 
-const HOUR_PX = 34
-const DAY_START = 0 // midnight; full 24h grid
+const HOUR_PX = 52
 
 function mins(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
   return h * 60 + m
 }
 
-function Plane({ b }) {
-  const top = (mins(b.start) / 60 - DAY_START) * HOUR_PX
-  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 2, 16)
-  const cls = ['plane', b.status, b.fixed ? 'fixed' : ''].join(' ')
+function Plane({ b, dayStart }) {
+  const top = ((mins(b.start) - dayStart * 60) / 60) * HOUR_PX
+  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 3, 18)
+  const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
   return (
     <div className={cls} style={{ top, height, background: b.color + 'CC' }}>
       <div className="t">{b.domain ? `${b.domain} · ` : ''}{b.title}</div>
-      {b.next_action && height > 40 && <div className="na">↳ {b.next_action}</div>}
+      {b.next_action && height >= 60 && <div className="na">→ {b.next_action}</div>}
     </div>
   )
 }
 
 function Timeline({ today }) {
-  const nowTop = (mins(today.now) / 60 - DAY_START) * HOUR_PX
-  const hours = Array.from({ length: 25 }, (_, i) => i)
   if (!today.blocks.length)
     return (
       <div className="empty-day">
@@ -66,16 +63,23 @@ function Timeline({ today }) {
         <div className="hint">tell the bot: /plan — or wait for tonight's draft</div>
       </div>
     )
+  // dynamic window: an hour of air around the day's actual span (now included)
+  const firstMin = Math.min(...today.blocks.map((b) => mins(b.start)), mins(today.now))
+  const lastMin = Math.max(...today.blocks.map((b) => mins(b.end)), mins(today.now))
+  const dayStart = Math.max(Math.floor(firstMin / 60) - 1, 0)
+  const dayEnd = Math.min(Math.ceil(lastMin / 60) + 1, 24)
+  const hours = Array.from({ length: dayEnd - dayStart + 1 }, (_, i) => dayStart + i)
+  const nowTop = ((mins(today.now) - dayStart * 60) / 60) * HOUR_PX
   return (
     <div className="timeline">
-      <div className="tl-grid" style={{ height: 24 * HOUR_PX }}>
+      <div className="tl-grid" style={{ height: (dayEnd - dayStart) * HOUR_PX }}>
         {hours.map((h) => (
-          <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`}>
+          <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`} style={{ top: (h - dayStart) * HOUR_PX }}>
             <span className="h">{String(h).padStart(2, '0')}:00</span>
             <span className="rule" />
           </div>
         ))}
-        {today.blocks.map((b) => <Plane key={b.id} b={b} />)}
+        {today.blocks.map((b) => <Plane key={b.id} b={b} dayStart={dayStart} />)}
         <div className="nowline" style={{ top: nowTop }}>
           <span className="tag">NOW {today.now}</span>
         </div>
