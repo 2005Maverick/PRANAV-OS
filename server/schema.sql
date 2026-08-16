@@ -12,7 +12,7 @@ CREATE TABLE domains (
     id          SERIAL PRIMARY KEY,
     slug        TEXT UNIQUE NOT NULL,          -- 'research','trading','startup','uni','tech','gym','internship'
     name        TEXT NOT NULL,
-    color       TEXT NOT NULL,                 -- plane color hex, e.g. '#3F6B52'
+    color       TEXT NOT NULL,                 -- plane color hex, e.g. '#4A7A5F'
     floor_type  TEXT NOT NULL DEFAULT 'sessions_per_window',  -- sessions_per_window | minutes_per_window | ship_steps | ramp | none
     floor_target INT,                          -- e.g. 5 (sessions)
     floor_window_days INT DEFAULT 7,           -- rolling window
@@ -334,11 +334,11 @@ CREATE TABLE settings (
 -- SEED: the 7 domains with plane colors + default floors
 -- ---------------------------------------------------------------------
 INSERT INTO domains (slug, name, color, floor_type, floor_target, floor_window_days, floor_minutes, sort_order) VALUES
-('internship','Internship',   '#8C3A2E', 'none',                NULL, 7,  NULL, 1),
-('research',  'Masters & Research','#3F6B52','sessions_per_window',3, 7,  90,  2),
-('trading',   'Trading',      '#3E5F86', 'sessions_per_window', 5,  7,  60,  3),
-('startup',   'Startup',      '#8A6642', 'ship_steps',          4,  7,  NULL,4),
-('uni',       'University',   '#565C66', 'none',                NULL,7,  NULL,5),
-('tech',      'Tech Learning','#A5822B', 'sessions_per_window', 5,  7,  35,  6),
-('gym',       'Gym / Health', '#6E4A72', 'ramp',                7,  7,  NULL,7);
+('internship','Internship',   '#9A4434', 'none',                NULL, 7,  NULL, 1),
+('research',  'Masters & Research','#4A7A5F','sessions_per_window',3, 7,  90,  2),
+('trading',   'Trading',      '#486992', 'sessions_per_window', 5,  7,  60,  3),
+('startup',   'Startup',      '#97744E', 'ship_steps',          4,  7,  NULL,4),
+('uni',       'University',   '#646B76', 'none',                NULL,7,  NULL,5),
+('tech',      'Tech Learning','#B29036', 'sessions_per_window', 5,  7,  35,  6),
+('gym',       'Gym / Health', '#7C5681', 'ramp',                7,  7,  NULL,7);
 

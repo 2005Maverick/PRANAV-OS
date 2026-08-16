@@ -9,16 +9,16 @@ const MOCK_TODAY = {
   date: '2026-08-18', now: '15:42', status: 'confirmed',
   energy_note: 'built for 5h40 of sleep — nap repaid at 14:30',
   blocks: [
-    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#6E4A72', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
-    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#8C3A2E', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
-    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#565C66', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
-    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#6E4A72', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
-    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#3F6B52', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
-    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#8C3A2E', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
-    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#3E5F86', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
-    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#3E433C', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
-    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#8A6642', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
-    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#A5822B', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
+    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#7C5681', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
+    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#9A4434', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
+    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#646B76', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
+    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#7C5681', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
+    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#4A7A5F', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
+    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#9A4434', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
+    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#486992', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
+    { id: 8, title: 'Reward — Netflix, 1 ep committed', domain: null, color: '#474D45', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
+    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#97744E', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
+    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#B29036', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
   ],
 }
 
@@ -48,7 +48,7 @@ function Plane({ b, dayStart }) {
   const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 3, 18)
   const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
   return (
-    <div className={cls} style={{ top, height, background: b.color + 'CC' }}>
+    <div className={cls} style={{ top, height, background: b.color }}>
       <div className="row">
         <span className="tw">
           {b.domain && <span className="dom">{b.domain}</span>}
@@ -59,6 +59,11 @@ function Plane({ b, dayStart }) {
       {b.next_action && height >= 60 && <div className="na">→ {b.next_action}</div>}
     </div>
   )
+}
+
+function gapLabel(minutes) {
+  const h = Math.floor(minutes / 60), m = minutes % 60
+  return `${h ? h + 'h ' : ''}${m ? m + 'm' : ''}`.trim() + ' open'
 }
 
 function Timeline({ today }) {
@@ -76,18 +81,34 @@ function Timeline({ today }) {
   const dayEnd = Math.min(Math.ceil(lastMin / 60) + 1, 24)
   const hours = Array.from({ length: dayEnd - dayStart + 1 }, (_, i) => dayStart + i)
   const nowTop = ((mins(today.now) - dayStart * 60) / 60) * HOUR_PX
+  // buffer articulation: name the gaps >= 45 min between consecutive blocks
+  const sorted = [...today.blocks].sort((a, b2) => mins(a.start) - mins(b2.start))
+  const gaps = []
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const g = mins(sorted[i + 1].start) - mins(sorted[i].end)
+    if (g >= 45) gaps.push({
+      mid: (mins(sorted[i].end) + mins(sorted[i + 1].start)) / 2,
+      minutes: g,
+    })
+  }
   return (
     <div className="timeline">
       <div className="tl-grid" style={{ height: (dayEnd - dayStart) * HOUR_PX }}>
         {hours.map((h) => (
           <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`} style={{ top: (h - dayStart) * HOUR_PX }}>
-            <span className="h">{String(h).padStart(2, '0')}:00</span>
+            <span className="h">{String(h).padStart(2, '0')}</span>
             <span className="rule" />
+          </div>
+        ))}
+        <div className="spine" />
+        {gaps.map((g, i) => (
+          <div key={i} className="gap-tag" style={{ top: ((g.mid - dayStart * 60) / 60) * HOUR_PX }}>
+            {gapLabel(g.minutes)}
           </div>
         ))}
         {today.blocks.map((b) => <Plane key={b.id} b={b} dayStart={dayStart} />)}
         <div className="nowline" style={{ top: nowTop }}>
-          <span className="tag">NOW {today.now}</span>
+          <span className="tag">{today.now}</span>
         </div>
       </div>
     </div>
