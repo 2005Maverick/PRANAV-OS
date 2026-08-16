@@ -50,7 +50,10 @@ function Plane({ b, dayStart }) {
   return (
     <div className={cls} style={{ top, height, background: b.color + 'CC' }}>
       <div className="row">
-        <span className="t">{b.domain ? `${b.domain} · ` : ''}{b.title}</span>
+        <span className="tw">
+          {b.domain && <span className="dom">{b.domain}</span>}
+          <span className="t">{b.title}</span>
+        </span>
         <span className="time">{b.start}–{b.end}</span>
       </div>
       {b.next_action && height >= 60 && <div className="na">→ {b.next_action}</div>}

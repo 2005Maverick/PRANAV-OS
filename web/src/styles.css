@@ -100,18 +100,27 @@ body {
 .plane .row {
   display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
 }
+.plane .tw {
+  display: flex; align-items: baseline; gap: 10px; min-width: 0;
+}
+.plane .dom {
+  font-family: var(--font-inst); font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: rgba(242,239,233,0.55); flex-shrink: 0;
+}
 .plane .t {
-  font-family: var(--font-inst); font-size: 10.5px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(242,239,233,0.92);
+  font-size: 14.5px; font-weight: 500; letter-spacing: -0.005em;
+  color: rgba(242,239,233,0.95);
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
 .plane .time {
-  font-family: var(--font-inst); font-size: 10.5px; font-weight: 500;
+  font-family: var(--font-inst); font-size: 12px; font-weight: 500;
   font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
   color: rgba(242,239,233,0.85); flex-shrink: 0;
 }
-.plane.slim .t, .plane.slim .time { font-size: 9.5px; }
-.plane .na { font-size: 12.5px; color: rgba(242,239,233,0.68); margin-top: 3px;
+.plane.slim .t { font-size: 11.5px; }
+.plane.slim .dom { font-size: 9px; }
+.plane.slim .time { font-size: 10.5px; }
+.plane .na { font-size: 13px; color: rgba(242,239,233,0.7); margin-top: 4px;
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .plane.done { opacity: 0.5; }
 .plane.skipped, .plane.sacrificed { opacity: 0.3; }
