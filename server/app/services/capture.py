@@ -30,8 +30,10 @@ async def capture_text(raw: str, tg_file_id: str | None = None) -> str:
 
     guess = None
     if section is None:
+        from .. import config
         guess = await llm.json_call(
-            f"Classify this captured item into exactly one section:\n"
+            model=config.LLM_MODEL_LITE,
+            prompt=f"Classify this captured item into exactly one section:\n"
             f"note | idea | prompt | reading | file\n"
             f'Also produce a short title (<=8 words) and the domain slug if obvious '
             f"(research|trading|startup|uni|tech|gym|internship, else null).\n"

@@ -37,14 +37,15 @@ entry). Always give him the choice; always name trade-offs in his own currency
 Hard rules: floors not streaks; plans bend, never die; propose, he disposes."""
 
 
-async def chat(messages: list[dict], system: str | None = None, max_tokens: int = 900) -> str | None:
+async def chat(messages: list[dict], system: str | None = None, max_tokens: int = 3000,
+               model: str | None = None) -> str | None:
     """Plain chat completion. Returns None on any failure."""
     c = client()
     if c is None:
         return None
     try:
         resp = await c.chat.completions.create(
-            model=config.LLM_MODEL,
+            model=model or config.LLM_MODEL,
             messages=[{"role": "system", "content": system or SYSTEM_PERSONA}] + messages,
             max_tokens=max_tokens,
             temperature=0.4,
@@ -55,14 +56,15 @@ async def chat(messages: list[dict], system: str | None = None, max_tokens: int 
         return None
 
 
-async def json_call(prompt: str, system: str | None = None, max_tokens: int = 1500) -> dict | list | None:
+async def json_call(prompt: str, system: str | None = None, max_tokens: int = 4000,
+                    model: str | None = None) -> dict | list | None:
     """Ask for strict JSON; parse defensively. Returns None on failure."""
     c = client()
     if c is None:
         return None
     try:
         resp = await c.chat.completions.create(
-            model=config.LLM_MODEL,
+            model=model or config.LLM_MODEL,
             messages=[
                 {"role": "system", "content": (system or SYSTEM_PERSONA) + "\n\nRespond with VALID JSON only. No prose, no markdown fences."},
                 {"role": "user", "content": prompt},
