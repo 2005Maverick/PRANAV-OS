@@ -2,6 +2,40 @@ import { useEffect, useState } from 'react'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
 
+// ?demo — a fully-lived-in day so the design can be judged before real data exists
+const DEMO = typeof window !== 'undefined' && window.location.search.includes('demo')
+
+const MOCK_TODAY = {
+  date: '2026-08-18', now: '15:42', status: 'confirmed',
+  energy_note: 'built for 5h40 of sleep — nap repaid at 14:30',
+  blocks: [
+    { id: 1, title: 'Wake protocol', domain: 'gym', color: '#5B3A5E', start: '07:50', end: '08:15', status: 'done', fixed: false, next_action: null },
+    { id: 2, title: 'OSINT demo — client run', domain: 'internship', color: '#7A2E2A', start: '09:00', end: '10:30', status: 'done', fixed: true, next_action: null },
+    { id: 3, title: 'Class — DBMS', domain: 'uni', color: '#4A4E57', start: '11:00', end: '13:00', status: 'done', fixed: true, next_action: null },
+    { id: 4, title: 'Nap — ledger repayment', domain: 'gym', color: '#5B3A5E', start: '14:30', end: '14:50', status: 'done', fixed: false, next_action: null },
+    { id: 5, title: 'A* paper — ablations', domain: 'research', color: '#2E5339', start: '15:30', end: '17:00', status: 'started', fixed: false, next_action: 'run config 3 — you were mid-table yesterday' },
+    { id: 6, title: 'Telangana sync', domain: 'internship', color: '#7A2E2A', start: '17:00', end: '18:00', status: 'planned', fixed: true, next_action: null },
+    { id: 7, title: 'Trading — module 7', domain: 'trading', color: '#2F4A6B', start: '19:00', end: '20:00', status: 'planned', fixed: false, next_action: 're-watch last 5 min of orderflow lecture' },
+    { id: 8, title: 'Netflix — 1 ep (committed)', domain: 'gym', color: '#3A3F38', start: '20:15', end: '21:05', status: 'planned', fixed: false, next_action: null },
+    { id: 9, title: 'Startup — ship digest cron', domain: 'startup', color: '#6B4A2F', start: '21:15', end: '22:00', status: 'planned', fixed: false, next_action: 'deploy the digest cron — 3 steps from launch' },
+    { id: 10, title: 'Tech read — RL fine-tuning thread', domain: 'tech', color: '#8A6A1F', start: '22:05', end: '22:35', status: 'sacrificed', fixed: false, next_action: null },
+  ],
+}
+
+const MOCK_RAIL = {
+  next_fixed: { title: 'Telangana sync', at: '17:00' },
+  sleep: { hours: 5.7, debt: -2.1 },
+  floors: [
+    { slug: 'tech', name: 'Tech Learning', done: 2, target: 5, ok: false },
+    { slug: 'research', name: 'Masters & Research', done: 2, target: 3, ok: false },
+    { slug: 'gym', name: 'Gym / Health', done: 5, target: 7, ok: false },
+    { slug: 'trading', name: 'Trading', done: 5, target: 5, ok: true },
+    { slug: 'startup', name: 'Startup', done: 4, target: 4, ok: true },
+  ],
+  masters_days: 168,
+  protocol: { steps_done: 4, steps_total: 4, completed: true },
+}
+
 const HOUR_PX = 34
 const DAY_START = 0 // midnight; full 24h grid
 
@@ -122,6 +156,11 @@ export default function App() {
   const [rail, setRail] = useState(null)
 
   useEffect(() => {
+    if (DEMO) {
+      setToday(MOCK_TODAY)
+      setRail(MOCK_RAIL)
+      return
+    }
     const load = () => {
       fetch(`${API}/api/today`).then((r) => r.json()).then(setToday).catch(() => {})
       fetch(`${API}/api/rail`).then((r) => r.json()).then(setRail).catch(() => {})
