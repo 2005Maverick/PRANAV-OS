@@ -45,10 +45,10 @@ function mins(hhmm) {
 
 function Plane({ b, dayStart }) {
   const top = ((mins(b.start) - dayStart * 60) / 60) * HOUR_PX
-  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 3, 18)
+  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 7, 18)
   const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
   return (
-    <div className={cls} style={{ top, height, background: b.color + 'CC' }}>
+    <div className={cls} style={{ top, height, '--c': b.color }}>
       <div className="row">
         <span className="tw">
           {b.domain && <span className="dom">{b.domain}</span>}
