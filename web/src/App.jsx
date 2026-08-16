@@ -93,61 +93,67 @@ function Rail({ rail }) {
   return (
     <aside className="rail">
       <div className="inst">
-        <div className="label">Next</div>
+        <div className="label">Next fixed</div>
         {rail.next_fixed ? (
-          <>
-            <div className="big acid">{rail.next_fixed.at}</div>
-            <div className="small">{rail.next_fixed.title}</div>
-          </>
+          <div className="split">
+            <span className="ev">{rail.next_fixed.title}</span>
+            <span className="mono acid">{rail.next_fixed.at}</span>
+          </div>
         ) : (
           <div className="small">nothing fixed ahead today</div>
         )}
       </div>
 
       <div className="inst">
-        <div className="label">Tonight</div>
+        <div className="label">Sleep ledger</div>
         {rail.sleep && rail.sleep.debt != null ? (
           <>
-            <div className="big">{rail.sleep.debt > 0 ? '+' : ''}{rail.sleep.debt.toFixed(1)}<span className="unit">H LEDGER</span></div>
-            <div className="small">last night: {rail.sleep.hours ? rail.sleep.hours.toFixed(1) + 'h' : '—'}</div>
+            <div className="big">{rail.sleep.debt > 0 ? '+' : '−'}{Math.abs(rail.sleep.debt).toFixed(1)}<span className="u">h</span></div>
+            <div className="small">last night {rail.sleep.hours ? rail.sleep.hours.toFixed(1) + 'h' : '—'} · repaying tonight</div>
           </>
         ) : (
-          <div className="small">no sleep data yet — say "sleeping" tonight</div>
+          <div className="small">no data yet — say "sleeping" tonight</div>
         )}
       </div>
 
       <div className="inst">
         <div className="label">
-          Floors{atRisk > 0 && <><span className="warn" />{atRisk} at risk</>}
+          <span>Floors</span>
+          {atRisk > 0 && <span className="label-note">{atRisk} at risk</span>}
         </div>
-        {rail.floors.map((f) => (
-          <div key={f.slug} className={`floor-row ${f.ok ? 'ok-row' : 'risk'}`}>
-            <span className="name">{f.name}</span>
-            <span className="cells">
-              {Array.from({ length: f.target }, (_, i) => (
-                <span key={i} className={`cell ${i < f.done ? 'f' : ''}`} />
-              ))}
-            </span>
-            <span className={`score ${f.ok ? 'good' : 'bad'}`}>
-              {f.done}/{f.target}{f.ok ? ' ✓' : ''}
-            </span>
-          </div>
-        ))}
+        <div className="floors">
+          {rail.floors.map((f) => (
+            <div key={f.slug} className={`frow ${f.ok ? 'ok' : 'risk'}`}>
+              <div className="frow-line">
+                <span className="name">{f.name}</span>
+                <span className="score mono">{f.done}/{f.target}</span>
+              </div>
+              <div className="bar">
+                {Array.from({ length: f.target }, (_, i) => (
+                  <span key={i} className={`seg ${i < f.done ? 'f' : ''}`} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="inst">
-        <div className="label">Arcs</div>
+        <div className="label">Masters arc</div>
         {rail.masters_days != null ? (
-          <div className="big acid">{rail.masters_days}<span className="unit">DAYS · MASTERS</span></div>
+          <>
+            <div className="big acid">{rail.masters_days}<span className="u">days</span></div>
+            <div className="small">to application window</div>
+          </>
         ) : (
-          <div className="small">masters date not set — onboarding pending</div>
+          <div className="small">date not set — onboarding pending</div>
         )}
       </div>
 
-      <div className="proto-chip">
+      <div className="proto-chip mono">
         {rail.protocol
-          ? `WAKE ${rail.protocol.completed ? '✓' : `${rail.protocol.steps_done}/${rail.protocol.steps_total}`}`
-          : 'WAKE PROTOCOL · NOT CONFIGURED'}
+          ? (rail.protocol.completed ? 'wake protocol — done' : `wake protocol ${rail.protocol.steps_done}/${rail.protocol.steps_total}`)
+          : 'wake protocol — not configured'}
       </div>
     </aside>
   )
