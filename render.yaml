@@ -16,7 +16,11 @@ services:
       - key: LITELLM_API_KEY
         sync: false
       - key: LLM_MODEL
-        value: rig-quality
+        value: gemini-flash-latest
+      - key: LLM_MODEL_LITE
+        value: gemini-flash-lite-latest
+      - key: LLM_MODEL_DEEP
+        value: gemini-pro-latest
       - key: TIMEZONE
         value: Asia/Kolkata
       - key: EVENING_CLOSE
