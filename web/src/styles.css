@@ -226,51 +226,59 @@ body {
 
 /* ---------- week ---------- */
 .week {
-  display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 10px;
-  padding: 28px 32px 48px; max-width: 1180px;
+  display: grid; grid-template-columns: 30px repeat(7, 1fr); gap: 12px;
+  padding: 28px 36px 48px;
 }
-.wk-gutter { position: relative; margin-top: 34px; }
+.wk-gutter { position: relative; margin-top: 32px; }
 .wk-h {
-  position: absolute; right: 4px; transform: translateY(-50%);
+  position: absolute; right: 2px; transform: translateY(-50%);
   font-family: var(--font-inst); font-size: 10px; color: var(--faint);
 }
 .wcol-head {
-  display: flex; align-items: baseline; gap: 7px; padding: 0 2px 8px;
+  display: flex; align-items: baseline; gap: 7px; padding: 0 3px 9px;
 }
-.wcol-head .wd { font-size: 12.5px; font-weight: 500; color: var(--dim); }
+.wcol-head .wd { font-size: 13px; font-weight: 500; color: var(--dim); }
 .wcol-head .wdate { font-size: 11px; color: var(--faint); }
+.wcol-head .whrs { margin-left: auto; font-size: 10.5px; color: var(--faint); }
 .wcol.is-today .wcol-head .wd { color: var(--acid); }
+.wcol.is-today .wcol-head .whrs { color: var(--dim); }
 .wcol-grid {
-  position: relative; border-radius: 8px;
+  position: relative; border-radius: 9px;
   background: var(--ink-lift);
   border: 1px solid var(--line-soft);
   overflow: hidden;
 }
-.wcol.is-today .wcol-grid { border-color: color-mix(in srgb, var(--acid) 40%, var(--line)); }
-.wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-soft); opacity: 0.6; }
+.wcol.is-today .wcol-grid {
+  border-color: color-mix(in srgb, var(--acid) 45%, var(--line));
+  background: color-mix(in srgb, var(--acid) 3%, var(--ink-lift));
+}
+.wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-soft); opacity: 0.55; }
 .wplane {
-  position: absolute; left: 5px; right: 5px;
-  border-radius: 5px; overflow: hidden; padding: 3px 7px;
+  position: absolute;
+  border-radius: 5px; overflow: hidden; padding: 4px 8px;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--c) 30%, var(--ink-lift)),
-    color-mix(in srgb, var(--c) 16%, var(--ink)));
+    color-mix(in srgb, var(--c) 34%, var(--ink-lift)),
+    color-mix(in srgb, var(--c) 18%, var(--ink)));
   border-left: 2px solid var(--c);
 }
 .wplane .wt {
-  display: block; font-size: 10.5px; font-weight: 500;
-  color: rgba(242,239,233,0.9);
+  display: block; font-size: 11px; font-weight: 500; line-height: 1.25;
+  color: rgba(242,239,233,0.92);
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
 .wplane .wtime {
-  font-family: var(--font-inst); font-size: 9px; color: rgba(242,239,233,0.55);
+  font-family: var(--font-inst); font-size: 9.5px;
+  font-variant-numeric: tabular-nums; color: rgba(242,239,233,0.6);
 }
 .wplane.done { opacity: 0.55; }
 .wplane.skipped, .wplane.sacrificed { opacity: 0.28; }
 .wplane.fixed { border-left-style: double; border-left-width: 4px; }
-.wcol-foot {
-  padding: 7px 2px 0; font-size: 9.5px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--faint); text-align: center;
+.spectrum {
+  display: flex; gap: 2px; height: 4px; margin: 8px 3px 0;
+  border-radius: 2px; overflow: hidden;
 }
+.spectrum span { border-radius: 2px; }
+.spectrum .sp-dim { opacity: 0.25; }
 
 /* ---------- the wall ---------- */
 .wall { padding: 28px 40px 56px; max-width: 1100px; }
