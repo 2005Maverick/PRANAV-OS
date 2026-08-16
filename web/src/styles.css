@@ -8,7 +8,7 @@
   --bone: #EFEDE4;
   --dim: #9AA396;
   --faint: #5D655A;
-  --acid: #FF3D2E; /* fire red — the live/next accent */
+  --acid: #3FE0C5; /* verdigris — the live/next accent (cool electric vs warm earth planes) */
   --amber: #D9A050;
   --oxide: #C1352A;
 
@@ -135,7 +135,7 @@ body {
 .plane.skipped .t::after { content: " · skipped"; color: var(--oxide); }
 .plane.sacrificed .t::after { content: " · sacrificed"; color: var(--amber); }
 .plane.fixed { border-left-style: double; border-left-width: 6px; }
-.plane.started { box-shadow: inset 0 0 0 1px rgba(255,61,46,0.5); }
+.plane.started { box-shadow: inset 0 0 0 1px rgba(63,224,197,0.5); }
 
 .nowline {
   position: absolute; left: 56px; right: -14px; height: 0;
