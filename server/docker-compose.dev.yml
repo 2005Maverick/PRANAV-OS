@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pranavos-db
+    environment:
+      POSTGRES_USER: pranav
+      POSTGRES_PASSWORD: pranavos_dev
+      POSTGRES_DB: pranavos
+    ports:
+      - "5433:5432"
+    volumes:
+      - pranavos_pgdata:/var/lib/postgresql/data
+volumes:
+  pranavos_pgdata:

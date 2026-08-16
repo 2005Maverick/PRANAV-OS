@@ -1,0 +1,23 @@
+"""Central config — everything from .env, validated at startup."""
+import os
+from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+DATABASE_URL = os.environ["DATABASE_URL"]
+LITELLM_BASE_URL = os.environ.get("LITELLM_BASE_URL", "")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "")
+LLM_MODEL = os.environ.get("LLM_MODEL", "rig-quality")
+TZ = ZoneInfo(os.environ.get("TIMEZONE", "Asia/Kolkata"))
+EVENING_CLOSE = os.environ.get("EVENING_CLOSE", "22:30")
+DEFAULT_WAKE = os.environ.get("DEFAULT_WAKE", "07:45")
+
+# Set after Pranav presses /start the first time (persisted in DB, cached here)
+OWNER_CHAT_ID: int | None = None
+
+
+def require_llm() -> bool:
+    """True if the LLM gateway is configured (not the CHANGEME placeholder)."""
+    return bool(LITELLM_API_KEY) and not LITELLM_API_KEY.startswith("CHANGEME")

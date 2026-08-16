@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: pranav-os
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.web:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: DATABASE_URL          # Neon connection string
+        sync: false
+      - key: LITELLM_BASE_URL
+        sync: false
+      - key: LITELLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: rig-quality
+      - key: TIMEZONE
+        value: Asia/Kolkata
+      - key: EVENING_CLOSE
+        value: "22:30"
+      - key: DEFAULT_WAKE
+        value: "07:45"
+      - key: WEBHOOK_URL           # https://<this-service>.onrender.com
+        sync: false
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: TICK_KEY
+        generateValue: true
