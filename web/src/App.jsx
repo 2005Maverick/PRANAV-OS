@@ -170,7 +170,7 @@ export default function App() {
   const current = today.blocks.find((b) => b.status === 'started')
   const titles = { today: 'Today', week: 'Week', wall: 'The Wall' }
   return (
-    <div className="cockpit">
+    <div className={`cockpit ${view === 'today' ? '' : 'full'}`}>
       <header className="head">
         <div className="brand">
           <h1>{titles[view]}</h1>
@@ -199,7 +199,7 @@ export default function App() {
         {view === 'week' && (week ? <Week days={week} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
       </main>
-      <Rail rail={rail} />
+      {view === 'today' && <Rail rail={rail} />}
     </div>
   )
 }
