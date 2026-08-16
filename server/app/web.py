@@ -50,7 +50,7 @@ async def health():
     return {"ok": True, "service": "pranav-os"}
 
 
-@app.post("/webhook/{secret}")
+@app.post("/webhook/{secret:path}")
 async def webhook(secret: str, request: Request):
     if secret != WEBHOOK_SECRET:
         return Response(status_code=403)
