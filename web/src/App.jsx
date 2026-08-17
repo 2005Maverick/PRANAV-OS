@@ -82,13 +82,16 @@ function elasticLayout(blocks, nowM, availH) {
 
 const fmtGap = (m) => `${m >= 60 ? Math.floor(m / 60) + 'H ' : ''}${m % 60 ? (m % 60) + 'M' : ''}`.trim()
 
+const domainCode = (domain) => `var(--m-${domain || 'reward'}, var(--_m-graph))`
+
 function Room({ b, top, height }) {
   const cls = ['room', b.status, b.fixed ? 'fixed' : '', height < 44 ? 'slim' : ''].join(' ')
   const revised = b.status === 'sacrificed' || b.status === 'skipped'
   return (
-    <div className={cls} style={{ top, height, '--c': b.color }}>
+    <div className={cls} style={{ top, height, '--c': domainCode(b.domain) }}>
       <div className="r-row">
         <span className="r-title">
+          <span className="swatch" aria-hidden="true" />
           {b.domain && <span className="r-dom">{b.domain}</span>}
           {b.title}
         </span>
@@ -235,8 +238,8 @@ function Works({ rail, today }) {
       <div className="works-h"><span className="cap" style={{ color: 'var(--text-faint)' }}>Schedule of works</span></div>
 
       {current ? (
-        <div className="current-work" style={{ '--c': current.color }}>
-          <div className="cw-dom">Now{current.domain ? ` · ${current.domain}` : ''}</div>
+        <div className="current-work" style={{ '--c': domainCode(current.domain) }}>
+          <div className="cw-dom"><span className="swatch" aria-hidden="true" />Now{current.domain ? ` · ${current.domain}` : ''}</div>
           <div className="cw-title">{current.title}</div>
           <div className="cw-count">{minsLeft}<span className="u">MIN LEFT</span></div>
           {current.next_action && <div className="cw-next">→ {current.next_action}</div>}
