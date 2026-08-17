@@ -93,6 +93,108 @@ async def plan_tomorrow():
     return {"reply": text}
 
 
+@router.get("/arcs")
+async def arcs():
+    today_d = _now().date()
+    masters_date = await db.get_setting("masters_date")
+    goals = await db.fetch(
+        """SELECT g.title, g.due_date::text, g.status, d.slug AS domain
+           FROM goals g LEFT JOIN domains d ON d.id=g.domain_id
+           WHERE g.status='active' ORDER BY g.due_date NULLS LAST LIMIT 30""")
+
+    def _cutoff(days: int) -> dt.date:
+        return today_d - dt.timedelta(days=days)
+
+    async def _dom_hours(slug: str, days: int) -> float:
+        v = await db.fetchval(
+            """SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (b.end_at - b.start_at)))/3600, 0)
+               FROM blocks b JOIN days dy ON dy.id=b.day_id
+               JOIN domains d ON d.id=b.domain_id
+               WHERE d.slug=$1 AND b.status='done' AND dy.date > $2""",
+            slug, _cutoff(days))
+        return round(float(v), 1)
+
+    async def _dom_count(slug: str, days: int) -> int:
+        return await db.fetchval(
+            """SELECT COUNT(*) FROM blocks b JOIN days dy ON dy.id=b.day_id
+               JOIN domains d ON d.id=b.domain_id
+               WHERE d.slug=$1 AND b.status='done' AND dy.date > $2""",
+            slug, _cutoff(days))
+
+    spark = await db.fetch(
+        """SELECT dy.date::text, COUNT(*) AS n
+           FROM blocks b JOIN days dy ON dy.id=b.day_id
+           JOIN domains d ON d.id=b.domain_id
+           WHERE d.slug='startup' AND b.status='done' AND dy.date > $1
+           GROUP BY dy.date ORDER BY dy.date""", _cutoff(14))
+    return {
+        "masters": {
+            "days": (dt.date.fromisoformat(masters_date) - today_d).days if masters_date else None,
+            "goals": [dict(g) for g in goals if g["domain"] == "research"],
+            "pipeline": [dict(c) for c in await db.fetch(
+                "SELECT title, due_date::text FROM commitments WHERE status='open' AND due_date IS NOT NULL ORDER BY due_date LIMIT 8")],
+        },
+        "paper": {"hours_30d": await _dom_hours("research", 30), "hours_7d": await _dom_hours("research", 7)},
+        "startup": {"ships_30d": await _dom_count("startup", 30), "ships_7d": await _dom_count("startup", 7),
+                    "spark": [dict(s) for s in spark]},
+        "trading": {"sessions_total": await _dom_count("trading", 3650), "sessions_7d": await _dom_count("trading", 7),
+                    "hours_30d": await _dom_hours("trading", 30)},
+    }
+
+
+@router.get("/sleep")
+async def sleep_page():
+    logs = await db.fetch(
+        "SELECT date::text, hours, debt_after FROM sleep_logs ORDER BY date DESC LIMIT 30")
+    topo = await db.fetch(
+        """SELECT hour,
+                  COUNT(*) FILTER (WHERE kind='deep_done') AS deep,
+                  COUNT(*) FILTER (WHERE kind='shallow_done') AS shallow,
+                  COUNT(*) FILTER (WHERE kind='deep_failed') AS failed
+           FROM energy_observations GROUP BY hour ORDER BY hour""")
+    steps = await db.fetch(
+        "SELECT id, sort, text, essential FROM protocol_steps WHERE active ORDER BY sort")
+    runs = await db.fetch(
+        "SELECT date::text, completed FROM protocol_runs ORDER BY date DESC LIMIT 30")
+    corr = await db.fetchrow(
+        """WITH day_deep AS (
+             SELECT dy.date,
+                    COALESCE(SUM(EXTRACT(EPOCH FROM (b.end_at-b.start_at)))/3600,0) AS h
+             FROM days dy LEFT JOIN blocks b ON b.day_id=dy.id AND b.status='done'
+                  AND b.end_at-b.start_at >= interval '60 minutes'
+             GROUP BY dy.date)
+           SELECT AVG(dd.h) FILTER (WHERE pr.completed) AS with_protocol,
+                  AVG(dd.h) FILTER (WHERE pr.completed IS NOT TRUE) AS without_protocol
+           FROM day_deep dd LEFT JOIN protocol_runs pr ON pr.date=dd.date""")
+    return {
+        "logs": [{**dict(r), "hours": float(r["hours"]) if r["hours"] else None,
+                  "debt_after": float(r["debt_after"]) if r["debt_after"] is not None else None} for r in logs],
+        "topology": [dict(r) for r in topo],
+        "protocol": [dict(r) for r in steps],
+        "runs": [dict(r) for r in runs],
+        "correlation": {
+            "with": round(float(corr["with_protocol"]), 1) if corr and corr["with_protocol"] is not None else None,
+            "without": round(float(corr["without_protocol"]), 1) if corr and corr["without_protocol"] is not None else None,
+        },
+        "usual": {"sleep": await db.get_setting("usual_sleep"), "wake": await db.get_setting("usual_wake")},
+    }
+
+
+class ProtocolIn(BaseModel):
+    steps: list[str]
+
+
+@router.post("/sleep/protocol")
+async def sleep_protocol(body: ProtocolIn):
+    await db.execute("UPDATE protocol_steps SET active=FALSE WHERE active")
+    for i, s in enumerate(body.steps):
+        if s.strip():
+            await db.execute(
+                "INSERT INTO protocol_steps (sort, text, essential) VALUES ($1,$2,$3)",
+                i, s.strip()[:120], i < 2)
+    return {"ok": True}
+
+
 @router.get("/library")
 async def library(section: str | None = None, q: str | None = None):
     where, args = ["1=1"], []

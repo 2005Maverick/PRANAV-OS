@@ -79,11 +79,23 @@ async def tick_blocks(app: Application):
         day["id"], now)
     for b in ending:
         await db.execute("UPDATE blocks SET status='done', ended_at=$2 WHERE id=$1", b["id"], now)
+        # energy learning: what actually got done, and when
+        await db.execute(
+            """INSERT INTO energy_observations (hour, kind)
+               SELECT EXTRACT(HOUR FROM start_at AT TIME ZONE 'Asia/Kolkata')::int,
+                      CASE WHEN end_at - start_at >= interval '60 minutes'
+                           THEN 'deep_done' ELSE 'shallow_done' END
+               FROM blocks WHERE id=$1""", b["id"])
         await _send(app,
                     f"◼ {b['title']} — block over. One line: where did you stop, what's the next step?",
                     "closeout_prompt", b["id"])
 
     # blocks that were never started and are now over -> skipped, honestly
+    await db.execute(
+        """INSERT INTO energy_observations (hour, kind)
+           SELECT EXTRACT(HOUR FROM start_at AT TIME ZONE 'Asia/Kolkata')::int, 'deep_failed'
+           FROM blocks WHERE day_id=$1 AND status='planned' AND end_at <= $2
+             AND end_at - start_at >= interval '60 minutes'""", day["id"], now)
     await db.execute(
         """UPDATE blocks SET status='skipped', skip_reason='never started'
            WHERE day_id=$1 AND status='planned' AND end_at <= $2""", day["id"], now)

@@ -1,0 +1,2 @@
+arcs keys: ['masters', 'paper', 'startup', 'trading'] | trading sessions: 0
+sleep keys: ['correlation', 'logs', 'protocol', 'runs', 'topology', 'usual'] | logs: 0 | topo hours: 0 | corr: {'with': None, 'without': 0.0}
