@@ -1,0 +1,11 @@
+LLM json_call failed (gemini-flash-latest): Error code: 429 - [{'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this
+transcript: Idea the newsletter should have an audio version every Sunday
+F4 speech recognized: True
+start: Notes on for “TESTMTG sync”. Talk, voice-note, or paste as it happens. Say `meeting over` when done.
+note1: noted.
+note2: noted.
+end: Meeting closed — “TESTMTG sync”. /  / Client requested heat map filter delivery by Friday. Access list must be dispatched to their analyst immediately. /  / Your action items (2) — queued for planning: / • Send access list to the client's analyst / • Deliver heat map filter by Friday
+db summary set: True
+db actions: [{"mine": true, "text": "Send access list to the client's analyst"}, {"mine": true, "text": "Deliver heat map filter by Friday"}]
+commitments created: 2
+cleanup done

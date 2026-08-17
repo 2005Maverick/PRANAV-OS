@@ -6,7 +6,8 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, lists_fin, onboarding, planner, protocols, review, sleep
+from ..services import (capture, lists_fin, meetings_svc, onboarding, planner,
+                        protocols, review, sleep, transcribe)
 
 log = logging.getLogger("bot")
 
@@ -126,8 +127,15 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return row
 
     m = REPLAN_RE.match(text)
+    mtg_start = meetings_svc.MEETING_START_RE.match(text)
     if await onboarding.active():
         reply = await onboarding.handle(text)
+    elif mtg_start:
+        reply = await meetings_svc.start(mtg_start.group(1))
+    elif meetings_svc.MEETING_END_RE.match(text):
+        reply = await meetings_svc.end()
+    elif await meetings_svc.active_id():
+        reply = await meetings_svc.note(text)
     elif m:
         await update.message.reply_text("Redrawing…")
         reply = await planner.replan(m.group(1))
@@ -224,6 +232,23 @@ async def on_media(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     msg = update.message
     if msg.voice:
+        # transcribe -> searchable text; falls back to raw file storage
+        try:
+            f = await ctx.bot.get_file(msg.voice.file_id)
+            audio = bytes(await f.download_as_bytearray())
+            txt = await transcribe.transcribe(audio, "audio/ogg")
+        except Exception:
+            txt = None
+        if txt:
+            await _remember("user", f"[voice] {txt}")
+            if await meetings_svc.active_id():
+                reply = await meetings_svc.note(f"(voice) {txt}")
+            else:
+                reply = await capture.capture_text(txt)
+            reply = f"Heard: “{txt[:160]}{'…' if len(txt) > 160 else ''}”\n{reply}"
+            await _remember("assistant", reply)
+            await msg.reply_text(reply)
+            return
         kind, fid = "voice", msg.voice.file_id
     elif msg.video or msg.video_note:
         v = msg.video or msg.video_note

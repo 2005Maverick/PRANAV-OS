@@ -4,10 +4,25 @@ Every call degrades gracefully: if the gateway is unconfigured/unreachable,
 callers get None and fall back to deterministic behavior, so the heartbeat
 (pings, briefs, captures) never dies with the brain.
 """
+import asyncio
 import json
 import logging
 from openai import AsyncOpenAI
 from . import config
+
+TRANSIENT = ("503", "UNAVAILABLE", "overloaded", "timed out", "timeout")
+QUOTA = ("429", "RESOURCE_EXHAUSTED", "quota")
+
+
+def next_model(current: str | None) -> str | None:
+    """Next rung on the quota ladder after `current` (None when exhausted)."""
+    ladder = [config.LLM_MODEL] + [m for m in config.LLM_LADDER if m != config.LLM_MODEL]
+    cur = current or config.LLM_MODEL
+    try:
+        i = ladder.index(cur)
+    except ValueError:
+        return ladder[0]
+    return ladder[i + 1] if i + 1 < len(ladder) else None
 
 log = logging.getLogger("llm")
 
@@ -38,7 +53,7 @@ Hard rules: floors not streaks; plans bend, never die; propose, he disposes."""
 
 
 async def chat(messages: list[dict], system: str | None = None, max_tokens: int = 3000,
-               model: str | None = None) -> str | None:
+               model: str | None = None, _retry: bool = True) -> str | None:
     """Plain chat completion. Returns None on any failure."""
     c = client()
     if c is None:
@@ -52,15 +67,22 @@ async def chat(messages: list[dict], system: str | None = None, max_tokens: int 
         )
         return resp.choices[0].message.content
     except Exception as e:
-        log.warning("LLM chat failed: %s", e)
-        # deep/lite tier exhausted -> degrade to the daily model once
-        if model and model != config.LLM_MODEL:
+        err = str(e)
+        log.warning("LLM chat failed (%s): %s", model or config.LLM_MODEL, err[:160])
+        if _retry and any(t in err for t in TRANSIENT):
+            await asyncio.sleep(4)
+            return await chat(messages, system=system, max_tokens=max_tokens, model=model, _retry=False)
+        if any(q in err for q in QUOTA):
+            nm = next_model(model)
+            if nm:
+                return await chat(messages, system=system, max_tokens=max_tokens, model=nm)
+        elif model and model != config.LLM_MODEL:
             return await chat(messages, system=system, max_tokens=max_tokens, model=config.LLM_MODEL)
         return None
 
 
 async def json_call(prompt: str, system: str | None = None, max_tokens: int = 4000,
-                    model: str | None = None) -> dict | list | None:
+                    model: str | None = None, _retry: bool = True) -> dict | list | None:
     """Ask for strict JSON; parse defensively. Returns None on failure."""
     c = client()
     if c is None:
@@ -81,7 +103,15 @@ async def json_call(prompt: str, system: str | None = None, max_tokens: int = 40
             raw = raw[raw.find("\n") + 1:] if "\n" in raw else raw
         return json.loads(raw)
     except Exception as e:
-        log.warning("LLM json_call failed: %s", e)
-        if model and model != config.LLM_MODEL:
+        err = str(e)
+        log.warning("LLM json_call failed (%s): %s", model or config.LLM_MODEL, err[:160])
+        if _retry and any(t in err for t in TRANSIENT):
+            await asyncio.sleep(4)
+            return await json_call(prompt, system=system, max_tokens=max_tokens, model=model, _retry=False)
+        if any(q in err for q in QUOTA):
+            nm = next_model(model)
+            if nm:
+                return await json_call(prompt, system=system, max_tokens=max_tokens, model=nm)
+        elif model and model != config.LLM_MODEL:
             return await json_call(prompt, system=system, max_tokens=max_tokens, model=config.LLM_MODEL)
         return None
