@@ -79,8 +79,7 @@ body {
 
 /* ---------- timeline (the composition) ---------- */
 .timeline {
-  padding: 16px 40px 18px; position: relative;
-  max-width: 980px; /* planes read as composition, not full-width strips */
+  padding: 16px 48px 18px 40px; position: relative;
   flex: 1; min-height: 0; width: 100%;
 }
 .tl-grid { position: relative; }
@@ -97,15 +96,21 @@ body {
 
 .plane {
   position: absolute; left: 68px; right: 0;
-  padding: 9px 16px; overflow: hidden;
+  padding: 10px 18px; overflow: hidden;
   display: flex; flex-direction: column; justify-content: flex-start;
-  border-radius: 9px;
+  border-radius: 10px;
   background: linear-gradient(90deg,
-    color-mix(in srgb, var(--c) 24%, var(--ink-lift)),
-    color-mix(in srgb, var(--c) 11%, var(--ink)));
-  border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
-  border-left: 3px solid var(--c);
+    color-mix(in srgb, var(--c) 36%, var(--ink-lift)),
+    color-mix(in srgb, var(--c) 16%, var(--ink)));
+  border: 1px solid color-mix(in srgb, var(--c) 34%, transparent);
+  border-left: 4px solid var(--c);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 28px -18px color-mix(in srgb, var(--c) 70%, transparent),
+    0 3px 10px -6px rgba(0,0,0,0.55);
+  transition: filter 120ms ease;
 }
+.plane:hover { filter: brightness(1.12); }
 .plane.slim { padding: 0 16px; justify-content: center; }
 .plane .row {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
@@ -117,18 +122,18 @@ body {
   font-family: var(--font-inst); font-size: 9.5px; font-weight: 500;
   letter-spacing: 0.12em; text-transform: uppercase; flex-shrink: 0;
   padding: 3px 8px; border-radius: 5px;
-  background: color-mix(in srgb, var(--c) 32%, transparent);
-  color: color-mix(in srgb, var(--c) 40%, var(--bone));
+  background: color-mix(in srgb, var(--c) 45%, transparent);
+  color: color-mix(in srgb, var(--c) 30%, var(--bone));
 }
 .plane .t {
-  font-size: 14.5px; font-weight: 500; letter-spacing: -0.005em;
-  color: rgba(242,239,233,0.95);
+  font-size: 15px; font-weight: 500; letter-spacing: -0.005em;
+  color: rgba(245,243,238,0.97);
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
 .plane .time {
   font-family: var(--font-inst); font-size: 12px; font-weight: 500;
   font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
-  color: rgba(242,239,233,0.65); flex-shrink: 0;
+  color: rgba(242,239,233,0.78); flex-shrink: 0;
 }
 .plane.slim .t { font-size: 11.5px; }
 .plane.slim .dom { font-size: 8.5px; padding: 2px 6px; }
