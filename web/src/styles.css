@@ -486,12 +486,17 @@ button, input, select, textarea { font-family: inherit; }
    SHEET 04 · REVIEW — the issue room (sign off the week)
    ============================================================ */
 .review { overflow-y: auto; padding: var(--s-6) var(--s-6) var(--s-8); }
-.rv-doc { max-width: 720px; margin: 0 auto; }
+.rv-doc { max-width: 1240px; margin: 0 auto; }
+.rv-cols {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 0 var(--s-8); align-items: start;
+}
+@media (max-width: 980px) { .rv-cols { grid-template-columns: 1fr; } }
 .rv-intro { font-size: var(--fs-lg); font-weight: 500; margin-bottom: var(--s-2); }
 .rv-period { font-family: var(--font-anno); font-size: var(--fs-anno); color: var(--text-faint); }
 .rv-flash { font-family: var(--font-anno); font-size: var(--fs-anno); color: var(--success); margin-left: var(--s-4); }
 
-.rvs { display: grid; grid-template-columns: 44px 1fr; gap: var(--s-4); margin-top: var(--s-7); }
+.rvs { display: grid; grid-template-columns: 44px 1fr; gap: var(--s-4); margin-top: var(--s-6); }
 .rvs-idx {
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 500;
   color: var(--text-faint); border: 1px solid var(--border-strong);

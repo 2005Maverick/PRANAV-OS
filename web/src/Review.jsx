@@ -83,6 +83,8 @@ export default function Review({ demo }) {
         <span className="rv-period">{data.start} → {data.end}</span>
         {flash && <span className="rv-flash">{flash}</span>}
 
+        <div className="rv-cols">
+        <div>
         <section className="rvs">
           <span className="rvs-idx" aria-hidden="true">01</span>
           <div>
@@ -108,6 +110,25 @@ export default function Review({ demo }) {
           </div>
         </section>
 
+        <section className="rvs">
+          <span className="rvs-idx" aria-hidden="true">04</span>
+          <div>
+            <h2 className="rvs-title">What you ignored</h2>
+            <p className="rvs-note">
+              {data.nudges.total_ignored
+                ? `${data.nudges.total_ignored} nudges went unanswered. Should the system change — or should you?`
+                : 'Every nudge answered. You and the system are in step.'}
+            </p>
+            {data.nudges.kinds.filter((k) => k.ignored > 0).map((k) => (
+              <div key={k.kind} className="pvr-num" style={{ display: 'block', marginBottom: 'var(--s-1)' }}>
+                {k.kind.replace('_', ' ')}: {k.ignored} of {k.total} ignored
+              </div>
+            ))}
+          </div>
+        </section>
+        </div>
+
+        <div>
         <section className="rvs">
           <span className="rvs-idx" aria-hidden="true">02</span>
           <div>
@@ -150,23 +171,6 @@ export default function Review({ demo }) {
         </section>
 
         <section className="rvs">
-          <span className="rvs-idx" aria-hidden="true">04</span>
-          <div>
-            <h2 className="rvs-title">What you ignored</h2>
-            <p className="rvs-note">
-              {data.nudges.total_ignored
-                ? `${data.nudges.total_ignored} nudges went unanswered. Should the system change — or should you?`
-                : 'Every nudge answered. You and the system are in step.'}
-            </p>
-            {data.nudges.kinds.filter((k) => k.ignored > 0).map((k) => (
-              <div key={k.kind} className="pvr-num" style={{ display: 'block', marginBottom: 'var(--s-1)' }}>
-                {k.kind.replace('_', ' ')}: {k.ignored} of {k.total} ignored
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="rvs">
           <span className="rvs-idx" aria-hidden="true">05</span>
           <div>
             <h2 className="rvs-title">This week's ideas</h2>
@@ -188,6 +192,9 @@ export default function Review({ demo }) {
             {!ideas.length && <p className="rvs-note">Idea inbox is clear.</p>}
           </div>
         </section>
+
+        </div>
+        </div>
 
         <div className="rv-signoff">
           <button className="btn" onClick={() => act('/api/plan/tomorrow', {}, 'Tomorrow drafted — check the bot')}>
