@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, planner
+from ..services import capture, planner, protocols
 
 log = logging.getLogger("bot")
 
@@ -102,10 +102,53 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await _remember("user", text)
     low = text.lower()
 
+    async def _answer_nudge(kinds: tuple[str, ...], minutes: int = 60):
+        row = await db.fetchrow(
+            """SELECT id, block_id FROM nudges WHERE kind = ANY($1) AND response IS NULL
+               AND sent_at > now() - ($2 || ' minutes')::interval
+               ORDER BY id DESC LIMIT 1""", list(kinds), str(minutes))
+        if row:
+            await db.execute(
+                "UPDATE nudges SET response=$2, responded_at=now() WHERE id=$1", row["id"], text[:300])
+        return row
+
     m = REPLAN_RE.match(text)
     if m:
         await update.message.reply_text("Redrawing…")
         reply = await planner.replan(m.group(1))
+    elif low in ("done", "done.", "ok done", "did it"):
+        proto = await protocols.protocol_advance(None)
+        if proto == "__PROTOCOL_COMPLETE__":
+            brief = await planner.morning_brief()
+            await db.execute(
+                "UPDATE days SET brief_sent_at=now() WHERE date=$1", dt.datetime.now(config.TZ).date())
+            reply = "Protocol complete — day armed for composing.\n\n" + brief
+        elif proto:
+            reply = proto
+        else:
+            reply = await protocols.reward_close() or "Noted."
+    elif low in ("started", "start", "in", "on it"):
+        row = await _answer_nudge(("block_start", "escalation1", "escalation2"))
+        if row and row["block_id"]:
+            await db.execute(
+                "UPDATE blocks SET status='started', started_at=now() WHERE id=$1 AND status='planned'",
+                row["block_id"])
+            reply = "Go. I'm quiet until the block ends."
+        else:
+            reply = "Nothing pinged recently — /today shows the plan."
+    elif low.startswith("skip"):
+        reason = text[4:].strip(" :–-") or "no reason given"
+        row = await _answer_nudge(("block_start", "escalation1", "escalation2"))
+        if row and row["block_id"]:
+            await db.execute(
+                "UPDATE blocks SET status='skipped', skip_reason=$2 WHERE id=$1", row["block_id"], reason[:200])
+            reply = f"Skipped, on the record: “{reason}”. It shows on Sunday."
+        else:
+            reply = "No block waiting on you right now."
+    elif protocols.REWARD_RE.match(text):
+        reply = await protocols.reward_start(text)
+    elif await db.get_setting("pending_reward"):
+        reply = await protocols.reward_commit(text) or "Give me a number: `2 ep` or `40 min`."
     elif low in ("confirm", "confirmed", "arm", "arm the day"):
         date = dt.datetime.now(config.TZ).date()
         await db.execute("UPDATE days SET status='confirmed', confirmed_at=now() WHERE date=$1", date)
@@ -119,7 +162,16 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply = "Logged. Goodnight — I'll shape the morning around it."
     elif CAPTURE_HINT.match(text) or ("http://" in low or "https://" in low):
         reply = await capture.capture_text(text)
+    elif await db.fetchval(
+            """SELECT id FROM nudges WHERE kind='closeout_prompt' AND response IS NULL
+               AND sent_at > now() - interval '45 minutes' ORDER BY id DESC LIMIT 1"""):
+        row = await _answer_nudge(("closeout_prompt",), minutes=45)
+        if row and row["block_id"]:
+            await db.execute(
+                "INSERT INTO closeouts (block_id, stopped_at) VALUES ($1,$2)", row["block_id"], text[:400])
+        reply = "Logged. Next session starts exactly there."
     else:
+        await _answer_nudge(("checkin",), minutes=30)
         # full-context chat: recent messages + today's plan + floors
         recent = await db.fetch(
             "SELECT role, content FROM chat_messages WHERE surface='bot' ORDER BY id DESC LIMIT 16")

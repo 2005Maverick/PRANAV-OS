@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram.ext import Application
 
 from . import config, db
-from .services import planner
+from .services import planner, protocols
 
 log = logging.getLogger("scheduler")
 
@@ -53,7 +53,6 @@ async def tick_blocks(app: Application):
             msg += f"\nPlaylist: {b['playlist_url']}"
         msg += "\nReply `started`, `skip <why>`, or `replan: <what changed>`."
         await _send(app, msg, "block_start", b["id"])
-        await db.execute("UPDATE blocks SET status='started', started_at=$2 WHERE id=$1", b["id"], now)
 
     ending = await db.fetch(
         """SELECT b.id, b.title FROM blocks b
@@ -66,6 +65,17 @@ async def tick_blocks(app: Application):
                     f"◼ {b['title']} — block over. One line: where did you stop, what's the next step?",
                     "closeout_prompt", b["id"])
 
+    # blocks that were never started and are now over -> skipped, honestly
+    await db.execute(
+        """UPDATE blocks SET status='skipped', skip_reason='never started'
+           WHERE day_id=$1 AND status='planned' AND end_at <= $2""", day["id"], now)
+
+    async def send_k(text, kind="nudge", block_id=None):
+        await _send(app, text, kind, block_id)
+    await protocols.maybe_escalate(send_k)
+    await protocols.maybe_reward_checkin(send_k)
+    await protocols.maybe_checkin(send_k)
+
 
 async def morning_brief_tick(app: Application):
     """Runs every minute; fires once when wake_target arrives."""
@@ -75,6 +85,10 @@ async def morning_brief_tick(app: Application):
         return
     wake = day["wake_target"] or dt.time.fromisoformat(config.DEFAULT_WAKE)
     if now.time() >= wake:
+        async def send_k(text, kind="protocol", block_id=None):
+            await _send(app, text, kind, block_id)
+        if await protocols.gate_brief(send_k):
+            return  # brief unlocks when the protocol completes
         text = await planner.morning_brief()
         await _send(app, text, "brief")
         await db.execute("UPDATE days SET brief_sent_at=now() WHERE id=$1", day["id"])
