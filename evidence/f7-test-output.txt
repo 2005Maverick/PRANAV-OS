@@ -1,1 +1,5 @@
-prod never came up
+test block: 23
+webhook status: 200 {"ok":true}
+block status after callback: started
+nudge response recorded (0 ok - no ping existed): 0
+cleanup done; PASS = True

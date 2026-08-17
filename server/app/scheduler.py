@@ -10,7 +10,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application
 
 from . import config, db
-from .services import lists_fin, planner, protocols, tile
+from .services import lists_fin, planner, protocols, resurface, tile
 
 log = logging.getLogger("scheduler")
 
@@ -95,6 +95,9 @@ async def tick_blocks(app: Application):
     await protocols.maybe_checkin(send_k)
     await lists_fin.fire_lists(send_k)
     await lists_fin.fire_deadlines(send_k)
+    await resurface.surface_due(send_k)
+    await resurface.reading_slot(send_k)
+    await resurface.review_ready(send_k)
 
 
 async def morning_brief_tick(app: Application):

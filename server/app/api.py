@@ -93,6 +93,42 @@ async def plan_tomorrow():
     return {"reply": text}
 
 
+@router.get("/library")
+async def library(section: str | None = None, q: str | None = None):
+    where, args = ["1=1"], []
+    if section:
+        args.append(section)
+        where.append(f"section=${len(args)}")
+    if q:
+        args.append(f"%{q}%")
+        where.append(f"(title ILIKE ${len(args)} OR body ILIKE ${len(args)} OR url ILIKE ${len(args)})")
+    rows = await db.fetch(
+        f"""SELECT id, section, title, body, url, tags, est_minutes, idea_status,
+                   resurface_at, surfaced_ct, created_at::date::text AS created
+            FROM library_items WHERE {' AND '.join(where)}
+            ORDER BY id DESC LIMIT 100""", *args)
+    counts = await db.fetch(
+        "SELECT section, COUNT(*) AS n FROM library_items GROUP BY section")
+    return {
+        "items": [{**dict(r), "resurface_at": str(r["resurface_at"]) if r["resurface_at"] else None}
+                  for r in rows],
+        "counts": {r["section"]: r["n"] for r in counts},
+    }
+
+
+class ResurfaceIn(BaseModel):
+    id: int
+    days: int = 1
+
+
+@router.post("/library/resurface")
+async def library_resurface(body: ResurfaceIn):
+    await db.execute(
+        "UPDATE library_items SET resurface_at = now() + ($2 || ' days')::interval WHERE id=$1",
+        body.id, str(body.days))
+    return {"ok": True}
+
+
 @router.get("/lists")
 async def lists_get():
     rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")

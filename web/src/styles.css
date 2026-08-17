@@ -469,6 +469,34 @@ body {
 .fin-note { text-transform: capitalize; }
 .dim2 { color: var(--faint); font-size: 11px; }
 
+/* ---------- library ---------- */
+.page-wrap.wide { max-width: 1080px; }
+.lib-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.lib-tabs { display: flex; gap: 7px; flex-wrap: wrap; }
+.lib-search {
+  background: var(--ink-lift); color: var(--bone); border: 1px solid var(--line);
+  border-radius: 7px; font-family: var(--font-ui); font-size: 12.5px;
+  padding: 7px 12px; outline: none; min-width: 200px;
+}
+.lib-search:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.lib-card {
+  background: var(--ink-lift); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 7px;
+}
+.lib-head { display: flex; align-items: baseline; gap: 8px; }
+.lib-sec { pointer-events: none; }
+.lib-back { font-size: 10px; color: var(--acid); margin-left: auto; }
+.lib-title { font-size: 14.5px; font-weight: 500; }
+.lib-body { font-size: 12.5px; color: var(--dim); line-height: 1.5; }
+.lib-url { font-size: 11px; color: var(--acid); text-decoration: none; word-break: break-all; }
+.lib-actions { display: flex; gap: 8px; margin-top: 4px; }
+.rv-btn.dark-btn {
+  border-color: var(--line); color: var(--faint);
+  background: none;
+}
+.rv-btn.dark-btn:hover { color: var(--bone); border-color: var(--dim); }
+
 /* ---------- week ---------- */
 .week-floors {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

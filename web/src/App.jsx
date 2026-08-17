@@ -3,6 +3,7 @@ import Week from './Week.jsx'
 import Wall from './Wall.jsx'
 import Review from './Review.jsx'
 import { Lists, Finance } from './ListsFinance.jsx'
+import Library from './Library.jsx'
 import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
@@ -304,7 +305,7 @@ function Rail({ rail, today }) {
 }
 
 const VIEWS = ['today', 'week', 'wall', 'review']
-const MORE_VIEWS = ['lists', 'finance']
+const MORE_VIEWS = ['library', 'lists', 'finance']
 
 export default function App() {
   const [view, setView] = useState('today')
@@ -336,7 +337,7 @@ export default function App() {
 
   const titles = {
     today: 'Today', week: 'Week', wall: 'The Wall', review: 'Review',
-    lists: 'Lists', finance: 'Money',
+    lists: 'Lists', finance: 'Money', library: 'Library',
   }
   return (
     <div className={`cockpit ${view === 'today' ? '' : 'full'}`}>
@@ -364,6 +365,7 @@ export default function App() {
         {view === 'review' && <Review demo={DEMO} />}
         {view === 'lists' && <Lists demo={DEMO} />}
         {view === 'finance' && <Finance demo={DEMO} />}
+        {view === 'library' && <Library demo={DEMO} />}
       </main>
       {view === 'today' && <Rail rail={rail} today={today} />}
     </div>

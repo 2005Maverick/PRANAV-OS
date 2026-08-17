@@ -1,0 +1,4 @@
+seeded: 2
+surfaced first: 1 | second (want 0): 0
+reading slot fires (want 1): 1 [('reading_slot', 'Reading slot — 1 saved, ~8 min: • TESTLIB rl thread   https://x.com/t ')]
+cleanup done
