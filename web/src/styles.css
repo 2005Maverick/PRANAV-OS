@@ -213,6 +213,41 @@ body {
   text-transform: uppercase; color: var(--faint);
 }
 
+/* ---------- today top: capture + up-next ---------- */
+.today-top {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 18px 40px 0; max-width: 980px;
+}
+.capture { position: relative; flex: 1; min-width: 260px; }
+.capture input {
+  width: 100%; background: var(--ink-lift); color: var(--bone);
+  border: 1px solid var(--line); border-radius: 7px;
+  font-family: var(--font-ui); font-size: 13px;
+  padding: 9px 14px; outline: none;
+}
+.capture input:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
+.capture input::placeholder { color: var(--faint); }
+.cap-flash {
+  position: absolute; left: 2px; top: calc(100% + 4px);
+  font-family: var(--font-inst); font-size: 10.5px; color: var(--acid);
+}
+.upnext { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.un-label {
+  font-family: var(--font-inst); font-size: 9.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--faint);
+}
+.un-chip {
+  font-size: 12px; color: var(--dim);
+  background: color-mix(in srgb, var(--c) 14%, var(--ink-lift));
+  border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
+  border-radius: 6px; padding: 4px 10px;
+}
+.un-chip .un-t { font-size: 10.5px; color: color-mix(in srgb, var(--c) 45%, var(--bone)); margin-right: 4px; }
+.chip.playlist {
+  background: var(--ink-lift); color: var(--acid); border: 1px solid var(--line);
+  text-decoration: none; margin-right: 8px;
+}
+
 /* ---------- nav tabs ---------- */
 .tabs { display: flex; gap: 4px; margin-top: 10px; }
 .tab {

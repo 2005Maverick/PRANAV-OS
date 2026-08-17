@@ -33,6 +33,61 @@ function Plane({ b, dayStart }) {
   )
 }
 
+function CaptureBar() {
+  const [val, setVal] = useState('')
+  const [flash, setFlash] = useState(null)
+  const submit = async (e) => {
+    e.preventDefault()
+    const text = val.trim()
+    if (!text) return
+    setVal('')
+    if (DEMO) {
+      setFlash('Saved → Notes (demo).')
+    } else {
+      try {
+        const r = await fetch(`${API}/api/capture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        })
+        const d = await r.json()
+        setFlash(d.reply)
+      } catch {
+        setFlash('Capture failed — is the server up?')
+      }
+    }
+    setTimeout(() => setFlash(null), 4000)
+  }
+  return (
+    <form className="capture" onSubmit={submit}>
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        placeholder="capture anything — idea: …, note: …, a link, a prompt"
+      />
+      {flash && <span className="cap-flash">{flash}</span>}
+    </form>
+  )
+}
+
+function UpNext({ today }) {
+  const nowM = mins(today.now)
+  const next = today.blocks
+    .filter((b) => b.status === 'planned' && mins(b.start) > nowM)
+    .slice(0, 2)
+  if (!next.length) return null
+  return (
+    <div className="upnext">
+      <span className="un-label">up next</span>
+      {next.map((b) => (
+        <span key={b.id} className="un-chip" style={{ '--c': b.color }}>
+          <span className="un-t mono">{b.start}</span> {b.title}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 function Timeline({ today }) {
   if (!today.blocks.length)
     return (
@@ -87,7 +142,10 @@ function Rail({ rail }) {
         {rail.sleep && rail.sleep.debt != null ? (
           <>
             <div className="big">{rail.sleep.debt > 0 ? '+' : '−'}{Math.abs(rail.sleep.debt).toFixed(1)}<span className="u">h</span></div>
-            <div className="small">last night {rail.sleep.hours ? rail.sleep.hours.toFixed(1) + 'h' : '—'} · repaying tonight</div>
+            <div className="small">
+              last night {rail.sleep.hours ? rail.sleep.hours.toFixed(1) + 'h' : '—'}
+              {rail.sleep.close ? ` · close ${rail.sleep.close}` : ' · repaying tonight'}
+            </div>
           </>
         ) : (
           <div className="small">no data yet — say "sleeping" tonight</div>
@@ -189,13 +247,26 @@ export default function App() {
           {!current && today.energy_note && <div className="closeout">{today.energy_note}</div>}
         </div>
         <div className="timer">
+          {current?.playlist_url && (
+            <a className="chip playlist" href={current.playlist_url} target="_blank" rel="noreferrer">▶ playlist</a>
+          )}
           <span className={`chip ${current ? '' : 'idle'}`}>
-            {current ? `IN BLOCK · ends ${current.end}` : 'BETWEEN BLOCKS'}
+            {current
+              ? `IN BLOCK · ${Math.max(mins(current.end) - mins(today.now), 0)}m left · ends ${current.end}`
+              : 'BETWEEN BLOCKS'}
           </span>
         </div>
       </header>
       <main>
-        {view === 'today' && <Timeline today={today} />}
+        {view === 'today' && (
+          <>
+            <div className="today-top">
+              <CaptureBar />
+              <UpNext today={today} />
+            </div>
+            <Timeline today={today} />
+          </>
+        )}
         {view === 'week' && (week ? <Week days={week} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
       </main>

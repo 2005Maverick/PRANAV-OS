@@ -1,10 +1,13 @@
-"""Cockpit API — read endpoints the web app consumes."""
+"""Cockpit API — read endpoints + quick capture."""
 import datetime as dt
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from . import config, db
+from .services import capture as capture_svc
 from .services import planner
+from .services import sleep as sleep_svc
 
 router = APIRouter(prefix="/api")
 
@@ -38,6 +41,20 @@ async def today():
         "energy_note": day["energy_note"] if day else None,
         "blocks": blocks,
     }
+
+
+class CaptureIn(BaseModel):
+    text: str
+
+
+@router.post("/capture")
+async def quick_capture(body: CaptureIn):
+    """Cockpit quick-capture bar → same funnel as the bot."""
+    text = body.text.strip()
+    if not text:
+        return {"reply": "Empty."}
+    reply = await capture_svc.capture_text(text)
+    return {"reply": reply}
 
 
 async def _day_blocks(day_id: int) -> list[dict]:
@@ -101,9 +118,8 @@ async def rail():
         """SELECT b.title, b.start_at FROM blocks b JOIN days dy ON dy.id=b.day_id
            WHERE dy.date=$1 AND b.is_fixed AND b.start_at > $2
            ORDER BY b.start_at LIMIT 1""", now.date(), now)
-    # TONIGHT: sleep ledger
-    sleep = await db.fetchrow(
-        "SELECT hours, debt_after FROM sleep_logs ORDER BY date DESC LIMIT 1")
+    # TONIGHT: sleep ledger (real engine numbers)
+    sleep = await sleep_svc.status()
     # FLOORS: rolling status, at-risk first
     floors = await planner.floor_status()
     floors.sort(key=lambda f: (f["ok"], -(f["target"] - f["done"])))
@@ -118,9 +134,7 @@ async def rail():
     return {
         "next_fixed": ({"title": nxt["title"],
                         "at": nxt["start_at"].astimezone(config.TZ).strftime("%H:%M")} if nxt else None),
-        "sleep": ({"hours": float(sleep["hours"]) if sleep["hours"] else None,
-                   "debt": float(sleep["debt_after"]) if sleep["debt_after"] is not None else None}
-                  if sleep else None),
+        "sleep": sleep,
         "floors": floors,
         "masters_days": masters_days,
         "protocol": (dict(proto) if proto else None),

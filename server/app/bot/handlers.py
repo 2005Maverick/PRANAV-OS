@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, onboarding, planner, protocols
+from ..services import capture, onboarding, planner, protocols, sleep
 
 log = logging.getLogger("bot")
 
@@ -127,10 +127,14 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     elif low in ("done", "done.", "ok done", "did it"):
         proto = await protocols.protocol_advance(None)
         if proto == "__PROTOCOL_COMPLETE__":
+            wake = await sleep.on_wake()
             brief = await planner.morning_brief()
             await db.execute(
                 "UPDATE days SET brief_sent_at=now() WHERE date=$1", dt.datetime.now(config.TZ).date())
-            reply = "Protocol complete — day armed for composing.\n\n" + brief
+            prefix = "Protocol complete."
+            if wake and wake["hours"]:
+                prefix += f" Slept {wake['hours']:.1f}h — ledger {wake['debt']:+.1f}h, close tonight {wake['close']}."
+            reply = prefix + "\n\n" + brief
         elif proto:
             reply = proto
         else:
@@ -160,7 +164,10 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     elif low in ("confirm", "confirmed", "arm", "arm the day"):
         date = dt.datetime.now(config.TZ).date()
         await db.execute("UPDATE days SET status='confirmed', confirmed_at=now() WHERE date=$1", date)
+        wake = await sleep.on_wake()
         reply = "Armed. First block ping will come at its start. Go."
+        if wake and wake["note"]:
+            reply += "\n" + wake["note"]
     elif low in ("sleeping", "going to sleep", "sleep"):
         now = dt.datetime.now(config.TZ)
         date = now.date() if now.hour < 12 else (now + dt.timedelta(days=1)).date()
