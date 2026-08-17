@@ -1,26 +1,23 @@
-# PROGRESS
+# PROGRESS — RUN COMPLETE (2026-08-18)
 
-## Done (F1–F16 all verified with evidence in evidence/)
-- F1 Review room (engine + paper-world page + /review) · F2 Lists+deadlines · F3 Finance
-- F4 Voice transcription (Gemini native, verified on real TTS speech) · F5 Meeting mode
-- F6 Day-close PNG tile (Pillow, visually verified) · F7 Inline buttons (verified via PROD webhook)
-- F8 Per-domain playlists · F9 Library page + resurfacing engine + reading slot + review-ready nudge
-- F10 Arcs page · F11 Sleep & Energy page + energy logging in tick
-- F12 Password vault (scrypt+AESGCM, round-trip verified, bot pointers-only, reset clean for real setup)
-- F13 Talk room + decisions log · F14 Rules page (rules/floors/dials whitelist)
-- F15 Move dialog + fixed-conflict flag + force + next-week ghost skeleton
-- F16 Tick idempotency verified on prod (double-tick, 0 dupes, engines isolated)
-- Infra hardening: LLM quota ladder (3.7-flash 20/day!), transient retries, tick engine isolation,
-  two date-cast SQL fixes
+## Done
+ALL 18 CRITERIA PASSED (see CRITERIA.json evidence fields + evidence/ dir).
+Fresh-eyes evaluator: 1 NEEDS_WORK round (4 security findings) -> all fixed
+(F18: API key auth, vault claim-attack closed, stale-callback guard, no default
+secrets) -> re-inspected -> PASS, verified live against production.
+Deployed at https://pranav-os.onrender.com, all 15 endpoints keyed + healthy.
+Desktop/test-results.json harness marker removed. KB + memory updated.
 
 ## In progress
-- F17: prod endpoint sweep running (evidence/f17-prod-sweep.txt) -> fresh-eyes evaluator -> final report
+- (nothing)
 
-## Next
-- After PASS: update KB (non-rig/pranav-os), memory, remove Desktop/test-results.json marker,
-  final report to Pranav (incl. stray test messages in his chat + vault reset note + /onboard reminder)
+## Next (for a future session)
+- After Pranav runs /onboard: confirm recurring classes landed as fixed blocks
+- First real Sunday review; check pattern miner output on real data
+- Optional: deploy cockpit as Render static site; drag-to-replan; Telegram mini-app
 
 ## Notes
-- All 12 cockpit pages exist: today/week/wall/review + more▾(library/arcs/sleep/talk/lists/finance/vault/rules)
-- All 10 bot flows live; personal inputs (playlists, onboard, vault password) come from Pranav post-completion
-- Evidence flow + harness quirks + TZ-fixture gotchas: see git history of this file
+- Cockpit key = TICK_KEY value; KeyGate prompts once, stored in localStorage
+- Vault was reset clean during testing — Pranav sets the real password first use
+- gemini-3.7-flash free tier = 20 req/day; llm.py ladder degrades gracefully
+- All verify scripts in server/scripts/ seed AND clean their own TEST rows
