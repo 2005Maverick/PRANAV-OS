@@ -6,53 +6,41 @@
 
 /* ---------- 1 · palette (raw values live ONLY here) ---------- */
 :root {
-  --_film-900: oklch(0.17 0.030 252);
-  --_film-800: oklch(0.20 0.032 252);
-  --_film-700: oklch(0.24 0.032 250);
-  --_line-600: oklch(0.34 0.025 250);
-  --_line-700: oklch(0.28 0.022 250);
-  --_ivory:    oklch(0.93 0.006 250);
-  --_ivory-mut:oklch(0.70 0.008 250);
-  --_ivory-fnt:oklch(0.60 0.014 250);
-  --_redline:  oklch(0.62 0.185 32);
-  --_redline-t:oklch(0.74 0.150 32);
-  --_redline-d:oklch(0.50 0.160 32);
-  --_ok:       oklch(0.72 0.100 150);
-  --_warn:     oklch(0.78 0.120 85);
-  --_m-brick:  oklch(0.72 0.130 55);
-  --_m-copper: oklch(0.74 0.125 90);
-  --_m-ochre:  oklch(0.74 0.120 130);
-  --_m-sage:   oklch(0.74 0.115 170);
-  --_m-slate:  oklch(0.72 0.110 240);
-  --_m-plum:   oklch(0.72 0.115 300);
-  --_m-graph:  oklch(0.72 0.020 250);
-  --_m-felt:   oklch(0.68 0.060 170);
+  --_paper:     oklch(0.955 0.007 90);
+  --_sheet:     oklch(0.975 0.005 90);
+  --_paper-dim: oklch(0.925 0.008 90);
+  --_rule:      oklch(0.86 0.008 90);
+  --_rule-faint:oklch(0.90 0.007 90);
+  --_ink:       oklch(0.26 0.015 260);
+  --_ink-mut:   oklch(0.45 0.012 260);
+  --_ink-fnt:   oklch(0.52 0.010 260);
+  --_redline:   oklch(0.54 0.190 29);
+  --_redline-t: oklch(0.50 0.185 29);
+  --_redline-d: oklch(0.44 0.170 29);
+  --_ok:        oklch(0.45 0.100 150);
+  --_warn:      oklch(0.50 0.110 60);
+  --_m-graph: var(--_ink-mut);
 
   /* ---------- 2 · semantic tokens ---------- */
-  --bg: var(--_film-900);
-  --surface: var(--_film-800);
-  --surface-raised: var(--_film-700);
-  --border: var(--_line-600);
-  --border-faint: var(--_line-700);
-  --border-strong: oklch(0.51 0.025 250); /* interactive boundaries: >=3:1 */
-  --text: var(--_ivory);
-  --text-muted: var(--_ivory-mut);
-  --text-faint: var(--_ivory-fnt);
+  --bg: var(--_paper);
+  --surface: var(--_sheet);
+  --surface-raised: var(--_paper-dim);
+  --border: var(--_rule);
+  --border-faint: var(--_rule-faint);
+  --border-strong: oklch(0.62 0.012 260); /* interactive boundaries: >=3:1 */
+  --text: var(--_ink);
+  --text-muted: var(--_ink-mut);
+  --text-faint: var(--_ink-fnt);
   --accent: var(--_redline);
   --accent-text: var(--_redline-t);
   --accent-hover: var(--_redline-d);
   --success: var(--_ok);
   --warning: var(--_warn);
   --danger: var(--_redline);
-  /* domain code marks (edges + swatches only — never fills) */
-  --m-internship: var(--_m-brick);
-  --m-startup: var(--_m-copper);
-  --m-tech: var(--_m-ochre);
-  --m-research: var(--_m-sage);
-  --m-trading: var(--_m-slate);
-  --m-gym: var(--_m-plum);
-  --m-uni: var(--_m-graph);
-  --m-reward: var(--_m-felt);
+  /* domains are identified by label + line treatment; ink only */
+  --m-internship: var(--_ink); --m-startup: var(--_ink); --m-tech: var(--_ink);
+  --m-research: var(--_ink); --m-trading: var(--_ink); --m-gym: var(--_ink);
+  --m-uni: var(--_ink-mut); --m-reward: var(--_ink-fnt);
 
   /* ---------- 3 · type / space / radius / shadow / motion ---------- */
   --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -71,9 +59,9 @@
 
   --r-1: 2px; --r-2: 4px; --r-3: 8px; --r-4: 12px;
 
-  --e-1: 0 1px 2px oklch(0.10 0.03 252 / 0.5);
-  --e-2: 0 1px 2px oklch(0.10 0.03 252 / 0.5), 0 4px 12px oklch(0.10 0.03 252 / 0.35);
-  --e-3: 0 1px 2px oklch(0.10 0.03 252 / 0.5), 0 4px 12px oklch(0.10 0.03 252 / 0.35), 0 12px 32px oklch(0.10 0.03 252 / 0.3);
+  --e-1: 0 1px 2px oklch(0.30 0.02 260 / 0.10);
+  --e-2: 0 1px 2px oklch(0.30 0.02 260 / 0.10), 0 4px 12px oklch(0.30 0.02 260 / 0.08);
+  --e-3: 0 1px 2px oklch(0.30 0.02 260 / 0.10), 0 4px 12px oklch(0.30 0.02 260 / 0.08), 0 12px 32px oklch(0.30 0.02 260 / 0.08);
 
   --t-sm: 150ms; --t-md: 220ms; --t-lg: 320ms;
 
@@ -96,7 +84,7 @@
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; margin: 0; }
-html { color-scheme: dark; }
+html { color-scheme: light; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -112,7 +100,7 @@ button, input, select, textarea { font-family: inherit; }
   outline-offset: 2px;
   border-radius: var(--r-1);
 }
-::selection { background: var(--_redline-d); color: var(--text); }
+::selection { background: oklch(0.54 0.19 29 / 0.25); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -138,7 +126,7 @@ button, input, select, textarea { font-family: inherit; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .btn-primary {
   background: var(--accent); border-color: var(--accent);
-  color: var(--_film-900); font-weight: 650;
+  color: var(--_sheet); font-weight: 650;
 }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--text); }
 .field {
@@ -273,9 +261,9 @@ button, input, select, textarea { font-family: inherit; }
   margin-right: var(--s-3);
 }
 .swatch {
-  display: inline-block; width: 10px; height: 10px;
-  background: var(--c); border-radius: var(--r-1);
-  margin-right: var(--s-2);
+  display: inline-block; width: 9px; height: 9px;
+  background: transparent; border: 1.5px solid var(--c);
+  border-radius: var(--r-1); margin-right: var(--s-2);
 }
 .room .r-time {
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 500;
@@ -289,7 +277,7 @@ button, input, select, textarea { font-family: inherit; }
   background:
     repeating-linear-gradient(45deg,
       transparent 0 5px,
-      oklch(0.28 0.022 250 / 0.55) 5px 6px),
+      oklch(0.26 0.015 260 / 0.18) 5px 6px),
     var(--surface);
 }
 .room.done { opacity: 0.55; }
@@ -325,7 +313,7 @@ button, input, select, textarea { font-family: inherit; }
 .redline .rl-tag {
   position: absolute; left: -56px; top: 0; transform: translateY(-50%);
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 500;
-  background: var(--accent); color: var(--_film-900);
+  background: var(--accent); color: var(--_sheet);
   padding: 2px var(--s-2); border-radius: var(--r-1);
 }
 .redline::after {
