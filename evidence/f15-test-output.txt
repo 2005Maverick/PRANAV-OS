@@ -1,0 +1,7 @@
+conflict move: {'ok': False, 'conflict': 'TESTMV class'}
+forced move: {'ok': True, 'overlaps': None}
+clean move: {'ok': True, 'overlaps': None}
+final start (UTC): 2026-08-17 09:30:00+00:00
+move fixed refused: {'ok': False, 'error': "fixed blocks don't move — replan around them"}
+ghost days: 7 first: Mon
+cleanup done

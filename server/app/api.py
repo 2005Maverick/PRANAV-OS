@@ -215,6 +215,56 @@ async def rules_setting(body: SettingIn):
     return {"ok": True}
 
 
+class MoveIn(BaseModel):
+    block_id: int
+    start: str  # HH:MM
+    force: bool = False
+
+
+@router.post("/move")
+async def move_block(body: MoveIn):
+    blk = await db.fetchrow(
+        "SELECT b.*, dy.date FROM blocks b JOIN days dy ON dy.id=b.day_id WHERE b.id=$1", body.block_id)
+    if not blk:
+        return {"ok": False, "error": "block not found"}
+    if blk["is_fixed"]:
+        return {"ok": False, "error": "fixed blocks don't move — replan around them"}
+    dur = blk["end_at"] - blk["start_at"]
+    new_start = dt.datetime.combine(blk["date"], dt.time.fromisoformat(body.start), tzinfo=config.TZ)
+    new_end = new_start + dur
+    clash = await db.fetchrow(
+        """SELECT title FROM blocks
+           WHERE day_id=$1 AND id != $2 AND is_fixed
+             AND start_at < $4 AND end_at > $3 LIMIT 1""",
+        blk["day_id"], blk["id"], new_start, new_end)
+    if clash and not body.force:
+        return {"ok": False, "conflict": clash["title"]}
+    soft = await db.fetchrow(
+        """SELECT title FROM blocks
+           WHERE day_id=$1 AND id != $2 AND NOT is_fixed AND status IN ('planned','started')
+             AND start_at < $4 AND end_at > $3 LIMIT 1""",
+        blk["day_id"], blk["id"], new_start, new_end)
+    await db.execute(
+        "UPDATE blocks SET start_at=$2, end_at=$3 WHERE id=$1", blk["id"], new_start, new_end)
+    return {"ok": True, "overlaps": soft["title"] if soft else None}
+
+
+@router.get("/week-ghost")
+async def week_ghost():
+    """Next week's fixed skeleton (classes etc.) — the ghost draft."""
+    today_d = _now().date()
+    next_mon = today_d + dt.timedelta(days=7 - today_d.weekday())
+    out = []
+    for i in range(7):
+        date = next_mon + dt.timedelta(days=i)
+        recs = await db.fetch(
+            "SELECT title, start_t::text, end_t::text FROM recurring_blocks WHERE active AND dow=$1 ORDER BY start_t",
+            date.weekday())
+        out.append({"name": date.strftime("%a"), "date": date.strftime("%d"),
+                    "fixed": [dict(r) for r in recs]})
+    return {"days": out}
+
+
 @router.get("/vault/status")
 async def vault_status():
     n = await db.fetchval("SELECT COUNT(*) FROM vault_entries")

@@ -612,6 +612,21 @@ body {
 }
 .rules-num:focus, .rules-set:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); outline: none; }
 
+/* ---------- week extras ---------- */
+.ghost-week { padding: 6px 36px 40px; }
+.ghost-week .un-label { display: block; margin-bottom: 10px; }
+.ghost-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+@media (max-width: 900px) { .ghost-row { grid-template-columns: repeat(2, 1fr); } }
+.ghost-day {
+  border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 5px; opacity: 0.75;
+}
+.ghost-d { font-size: 10.5px; color: var(--dim); letter-spacing: 0.08em; }
+.ghost-item { font-size: 10px; color: var(--faint); }
+.ghost-open { font-style: italic; }
+.mv-panel { width: min(420px, 92vw); }
+.mv-msg { margin-top: 12px; font-size: 11.5px; display: flex; align-items: center; }
+
 /* ---------- week ---------- */
 .week-floors {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

@@ -1,0 +1,2 @@
+tick1: {'ok': True, 'errors': None} | tick2: {'ok': True, 'errors': None}
+nudges before/mid/after: 2 2 2 | dupes on 2nd tick: 0

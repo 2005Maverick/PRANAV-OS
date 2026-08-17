@@ -365,7 +365,7 @@ export default function App() {
       </header>
       <main>
         {view === 'today' && <Timeline today={today} />}
-        {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
+        {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} demo={DEMO} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
         {view === 'review' && <Review demo={DEMO} />}
         {view === 'lists' && <Lists demo={DEMO} />}

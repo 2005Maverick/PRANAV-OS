@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 function mins(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
   return h * 60 + m
@@ -79,20 +81,62 @@ function sharedElastic(days, colTarget) {
   return { yOf, total: y, d0, d1, segs }
 }
 
-function WeekPlane({ b, yOf }) {
+function WeekPlane({ b, yOf, onMove }) {
   const top = yOf(b.s)
   const height = Math.max(yOf(b.e) - top - 3, 18)
   const w = 100 / b.laneCount
   const cls = ['wplane', b.status, b.fixed ? 'fixed' : ''].join(' ')
   return (
-    <div className={cls} title={`${b.title} · ${b.start}–${b.end}`}
+    <div className={cls} title={`${b.title} · ${b.start}–${b.end}${b.fixed ? ' · fixed' : ' · click to move'}`}
+      onClick={() => !b.fixed && b.status === 'planned' && onMove(b)}
       style={{
         top, height, '--c': b.color,
         left: `calc(${w * b.lane}% + 5px)`,
         width: `calc(${w}% - 10px)`,
+        cursor: !b.fixed && b.status === 'planned' ? 'pointer' : 'default',
       }}>
       {height >= 18 && <span className="wt">{b.title}</span>}
       {height >= 40 && <span className="wtime">{b.start}–{b.end}</span>}
+    </div>
+  )
+}
+
+function MoveDialog({ block, onClose, onDone, demo }) {
+  const [start, setStart] = useState(block.start)
+  const [msg, setMsg] = useState(null)
+  const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
+  const apply = async (force = false) => {
+    if (demo) { setMsg({ ok: true, text: 'Moved (demo).' }); setTimeout(onDone, 700); return }
+    const r = await fetch(`${API}/api/move`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ block_id: block.id, start, force }),
+    }).then((x) => x.json()).catch(() => ({ ok: false, error: 'server unreachable' }))
+    if (r.ok) {
+      setMsg({ ok: true, text: r.overlaps ? `Moved — overlaps “${r.overlaps}”, consider a replan.` : 'Moved.' })
+      setTimeout(onDone, 900)
+    } else if (r.conflict) {
+      setMsg({ ok: false, text: `Collides with fixed “${r.conflict}”.`, conflict: true })
+    } else {
+      setMsg({ ok: false, text: r.error || 'failed' })
+    }
+  }
+  return (
+    <div className="day-detail" onClick={onClose}>
+      <div className="dd-panel mv-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="dd-head"><span className="dd-date">Move “{block.title}”</span>
+          <button className="dd-close" onClick={onClose}>×</button></div>
+        <div className="vault-row">
+          <span className="mono dim2">start at</span>
+          <input className="lib-search mono" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+          <button className="rv-btn dark-btn" onClick={() => apply(false)}>move</button>
+        </div>
+        {msg && (
+          <div className="mv-msg mono" style={{ color: msg.ok ? 'var(--acid)' : 'var(--amber)' }}>
+            {msg.text}
+            {msg.conflict && <button className="rv-btn dark-btn" style={{ marginLeft: 10 }} onClick={() => apply(true)}>move anyway</button>}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -109,7 +153,26 @@ function Spectrum({ blocks }) {
   )
 }
 
-export default function Week({ days, rail, now }) {
+const GHOST_MOCK = { days: [
+  { name: 'Mon', date: '24', fixed: [{ title: 'Class — DBMS', start_t: '11:00:00', end_t: '13:00:00' }] },
+  { name: 'Tue', date: '25', fixed: [] },
+  { name: 'Wed', date: '26', fixed: [{ title: 'Class — ML', start_t: '09:30:00', end_t: '11:00:00' }] },
+  { name: 'Thu', date: '27', fixed: [{ title: 'Class — DBMS', start_t: '11:00:00', end_t: '13:00:00' }] },
+  { name: 'Fri', date: '28', fixed: [] }, { name: 'Sat', date: '29', fixed: [] }, { name: 'Sun', date: '30', fixed: [] },
+] }
+
+export default function Week({ days, rail, now, demo }) {
+  const [moving, setMoving] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [ghost, setGhost] = useState(demo ? GHOST_MOCK : null)
+  const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
+  const isLateWeek = demo || new Date().getDay() === 0 || new Date().getDay() >= 5
+
+  useEffect(() => {
+    if (demo || !isLateWeek) return
+    fetch(`${API}/api/week-ghost`).then((r) => r.json()).then(setGhost).catch(() => {})
+  }, [])
+
   const laid = days.map((d) => ({ ...d, blocks: layout(d.blocks) }))
   const ax = sharedElastic(laid, 620)
   if (!ax) {
@@ -163,7 +226,7 @@ export default function Week({ days, rail, now }) {
                 {marks.filter(({ h }) => h % 3 === 0).map(({ h, y }) => (
                   <span key={h} className="wk-rule" style={{ top: y }} />
                 ))}
-                {d.blocks.map((b) => <WeekPlane key={b.id} b={b} yOf={yOf} />)}
+                {d.blocks.map((b) => <WeekPlane key={b.id} b={b} yOf={yOf} onMove={setMoving} />)}
                 {d.today && nowM != null && nowM >= d0 && nowM <= d1 && (
                   <span className="wk-now" style={{ top: yOf(nowM) }} />
                 )}
@@ -173,6 +236,29 @@ export default function Week({ days, rail, now }) {
           )
         })}
       </div>
+      {ghost && isLateWeek && (
+        <div className="ghost-week">
+          <div className="un-label">next week — the fixed skeleton</div>
+          <div className="ghost-row">
+            {ghost.days.map((g) => (
+              <div key={g.name} className="ghost-day">
+                <span className="mono ghost-d">{g.name} {g.date}</span>
+                {g.fixed.map((f, i) => (
+                  <span key={i} className="ghost-item mono">
+                    {f.start_t.slice(0, 5)} {f.title}
+                  </span>
+                ))}
+                {!g.fixed.length && <span className="ghost-item mono ghost-open">open</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {moving && (
+        <MoveDialog block={moving} demo={demo}
+          onClose={() => setMoving(null)}
+          onDone={() => { setMoving(null); if (!demo) window.location.reload() }} />
+      )}
     </div>
   )
 }
