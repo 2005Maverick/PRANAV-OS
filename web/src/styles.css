@@ -41,6 +41,7 @@
   --text-muted: var(--_ink-mut);
   --text-faint: var(--_ink-fnt);
   --accent: var(--_redline);
+  --accent-solid: var(--_redline);   /* filled controls (btn-primary) */
   --accent-text: var(--_redline-t);
   --accent-hover: var(--_redline-d);
   --success: var(--_ok);
@@ -96,6 +97,48 @@
   --font-voice: var(--font-body);
 }
 
+/* ---------- NIGHT PRINT (dark variant of the same drawing) ---------- */
+[data-theme="dark"] {
+  --m-reward: oklch(0.68 0.045 170);
+  --accent-solid: oklch(0.52 0.165 30);
+  --bg: oklch(0.19 0.022 255);
+  --surface: oklch(0.23 0.024 254);
+  --surface-raised: oklch(0.26 0.025 253);
+  --border: oklch(0.33 0.020 252);
+  --border-faint: oklch(0.28 0.018 252);
+  --border-strong: oklch(0.46 0.020 252);
+  --line-ink: oklch(0.44 0.018 252);
+  --text: oklch(0.92 0.008 90);
+  --text-muted: oklch(0.71 0.010 90);
+  --text-faint: oklch(0.64 0.012 252);
+  --accent: oklch(0.63 0.170 30);
+  --accent-text: oklch(0.73 0.150 30);
+  --accent-hover: oklch(0.55 0.160 30);
+  --success: oklch(0.72 0.100 150);
+  --warning: oklch(0.76 0.110 70);
+  --danger: var(--accent);
+  --m-internship: oklch(0.70 0.100 60);
+  --m-startup: oklch(0.72 0.095 105);
+  --m-tech: oklch(0.70 0.095 140);
+  --m-research: oklch(0.70 0.090 170);
+  --m-trading: oklch(0.68 0.105 245);
+  --m-gym: oklch(0.68 0.100 300);
+  --m-uni: oklch(0.68 0.014 260);
+  --m-felt: oklch(0.68 0.045 170);
+  --e-1: 0 1px 2px oklch(0.10 0.02 255 / 0.5);
+  --e-2: 0 1px 2px oklch(0.10 0.02 255 / 0.5), 0 4px 12px oklch(0.10 0.02 255 / 0.35);
+  --e-3: 0 1px 2px oklch(0.10 0.02 255 / 0.5), 0 4px 12px oklch(0.10 0.02 255 / 0.35), 0 12px 32px oklch(0.10 0.02 255 / 0.3);
+  color-scheme: dark;
+}
+[data-theme="dark"] .masthead { border-bottom-color: var(--border-strong); }
+[data-theme="dark"] .room.fixed {
+  background:
+    repeating-linear-gradient(45deg,
+      transparent 0 5px,
+      oklch(0.92 0.008 90 / 0.10) 5px 6px),
+    var(--surface);
+}
+
 /* ---------- base ---------- */
 * { box-sizing: border-box; margin: 0; }
 html { color-scheme: light; }
@@ -139,7 +182,7 @@ button, input, select, textarea { font-family: inherit; }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 .btn-primary {
-  background: var(--accent); border-color: var(--accent);
+  background: var(--accent-solid); border-color: var(--accent-solid);
   color: var(--_sheet); font-weight: 650;
 }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--text); }

@@ -336,7 +336,7 @@ const INDEX = [
   ['lists', '09', 'Lists'], ['finance', '10', 'Money'], ['vault', '11', 'Vault'], ['rules', '12', 'Rules'],
 ]
 
-function TitleBlock({ view, setView, today, onArm, arming }) {
+function TitleBlock({ view, setView, today, onArm, arming, theme, onTheme }) {
   const sheet = [...SHEETS, ...INDEX].find(([v]) => v === view) || SHEETS[0]
   const dateStr = new Date(today.date + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'short', day: '2-digit', month: 'short',
@@ -360,6 +360,10 @@ function TitleBlock({ view, setView, today, onArm, arming }) {
           <option value="" disabled>More</option>
           {INDEX.map(([v, no, name]) => <option key={v} value={v}>{name}</option>)}
         </select>
+        <button className="tb-tab" onClick={onTheme}
+          aria-label={theme === 'light' ? 'Switch to night print' : 'Switch to paper'}>
+          {theme === 'light' ? 'Night' : 'Day'}
+        </button>
       </nav>
       {today.status === 'draft' && (
         <button className="btn btn-primary" onClick={onArm} disabled={arming}>
@@ -440,6 +444,13 @@ export default function App() {
   const [arming, setArming] = useState(false)
   const [hasKey, setHasKey] = useState(
     DEMO || (typeof window !== 'undefined' && !!localStorage.getItem('pranav_key')))
+  const [theme, setTheme] = useState(
+    (typeof window !== 'undefined' && localStorage.getItem('pranav_theme')) || 'light')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('pranav_theme', theme)
+  }, [theme])
 
   const load = () => {
     if (DEMO) {
@@ -494,7 +505,8 @@ export default function App() {
   const isToday = view === 'today'
   return (
     <div className="drawing">
-      <TitleBlock view={view} setView={setView} today={today} onArm={arm} arming={arming} />
+      <TitleBlock view={view} setView={setView} today={today} onArm={arm} arming={arming}
+        theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} />
       {failed && <FetchError onRetry={load} />}
       <div className={`sheet-body ${isToday ? '' : 'full'}`}>
         {isToday && (today.blocks.length ? <Section today={today} /> : <EmptyDay />)}
