@@ -1,30 +1,26 @@
 # PROGRESS
 
-## Done
-- F1 Review room: engine (services/review.py) + /api/review/* + cockpit paper-world page + /review bot
-- F2 Lists & deadlines: services/lists_fin.py (add/new/show lists, weekly_day firing, 28/7/2 lead nudges, remind-me parser) + Lists page + tick wiring
-- F3 Finance: spent/subscription parsing + /api/finance + Money page
-- F4 Voice transcription: services/transcribe.py (Gemini native REST, 3-attempt retry) wired in bot voice handler + meeting notes
-- F5 Meeting mode: services/meetings_svc.py (start/note/end -> summary + action_items -> commitments)
-- F6 Day-close tile: services/tile.py (Pillow PNG, verified visually) + evening_close sends photo
-- F7 Inline buttons: brief confirm/adjust, ping started/+15/skip, callbacks verified through PROD webhook
-- F8 Playlists: domains.playlist_url (migrated), 'playlist for X: url' parser, ping/API/NOW-card carry it
-- LLM hardening: transient retry + QUOTA LADDER (gemini-3.7-flash free tier = only 20 req/day! ladder falls to 3.5-flash -> 3-flash-preview -> 3.1-flash-lite -> flash-lite-latest)
-- Tick armored: engines isolated (one failure can't 500 the heartbeat); fixed date-cast bug in commitments query
+## Done (F1–F16 all verified with evidence in evidence/)
+- F1 Review room (engine + paper-world page + /review) · F2 Lists+deadlines · F3 Finance
+- F4 Voice transcription (Gemini native, verified on real TTS speech) · F5 Meeting mode
+- F6 Day-close PNG tile (Pillow, visually verified) · F7 Inline buttons (verified via PROD webhook)
+- F8 Per-domain playlists · F9 Library page + resurfacing engine + reading slot + review-ready nudge
+- F10 Arcs page · F11 Sleep & Energy page + energy logging in tick
+- F12 Password vault (scrypt+AESGCM, round-trip verified, bot pointers-only, reset clean for real setup)
+- F13 Talk room + decisions log · F14 Rules page (rules/floors/dials whitelist)
+- F15 Move dialog + fixed-conflict flag + force + next-week ghost skeleton
+- F16 Tick idempotency verified on prod (double-tick, 0 dupes, engines isolated)
+- Infra hardening: LLM quota ladder (3.7-flash 20/day!), transient retries, tick engine isolation,
+  two date-cast SQL fixes
 
 ## In progress
-- F9 Library page + resurfacing engine
+- F17: prod endpoint sweep running (evidence/f17-prod-sweep.txt) -> fresh-eyes evaluator -> final report
 
 ## Next
-- F10 Arcs, F11 Sleep page + energy logging, F12 Vault (password-derived key), F13 Talk, F14 Rules,
-  F15 Week move-dialog + ghost draft, F16 engines wrap (resurface+pattern gen in tick), F17 deploy+fresh-eyes
+- After PASS: update KB (non-rig/pranav-os), memory, remove Desktop/test-results.json marker,
+  final report to Pranav (incl. stray test messages in his chat + vault reset note + /onboard reminder)
 
 ## Notes
-- Evidence flow: run verifier -> write to evidence/*.txt -> Read it (tracker logs) -> flip CRITERIA
-- Harness hooks resolve project root from SESSION cwd (Desktop) -> marker Desktop/test-results.json
-  activates tracking (remove at end of run + noted in final report)
-- verify scripts in server/scripts/verify_*.py; all seed AND clean their own TEST rows in Neon (prod DB!)
-- Windows TTS for speech fixtures: PowerShell System.Speech -> evidence/tts-sample.wav
-- Test callback sent 1 visible msg to Pranav's chat ("Go. I'm quiet...") — explain in final report
-- gemini-3.7-flash daily quota may be exhausted on heavy build days; ladder handles it
-- Bash tool cwd currently repo root; server venv: server/.venv/Scripts/python.exe
+- All 12 cockpit pages exist: today/week/wall/review + more▾(library/arcs/sleep/talk/lists/finance/vault/rules)
+- All 10 bot flows live; personal inputs (playlists, onboard, vault password) come from Pranav post-completion
+- Evidence flow + harness quirks + TZ-fixture gotchas: see git history of this file
