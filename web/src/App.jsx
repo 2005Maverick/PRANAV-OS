@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Week from './Week.jsx'
 import Wall from './Wall.jsx'
+import Review from './Review.jsx'
 import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
@@ -298,7 +299,7 @@ function Rail({ rail, today }) {
   )
 }
 
-const VIEWS = ['today', 'week', 'wall']
+const VIEWS = ['today', 'week', 'wall', 'review']
 
 export default function App() {
   const [view, setView] = useState('today')
@@ -328,7 +329,7 @@ export default function App() {
 
   if (!today || !rail) return <div className="loading">Pranav OS · connecting</div>
 
-  const titles = { today: 'Today', week: 'Week', wall: 'The Wall' }
+  const titles = { today: 'Today', week: 'Week', wall: 'The Wall', review: 'Review' }
   return (
     <div className={`cockpit ${view === 'today' ? '' : 'full'}`}>
       <header className="head">
@@ -347,6 +348,7 @@ export default function App() {
         {view === 'today' && <Timeline today={today} />}
         {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
+        {view === 'review' && <Review demo={DEMO} />}
       </main>
       {view === 'today' && <Rail rail={rail} today={today} />}
     </div>

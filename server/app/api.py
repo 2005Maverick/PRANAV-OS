@@ -43,6 +43,54 @@ async def today():
     }
 
 
+from .services import review as review_svc  # noqa: E402
+
+
+@router.get("/review/{kind}")
+async def review_data(kind: str):
+    if kind not in ("week", "weekly", "month", "monthly"):
+        kind = "weekly"
+    return await review_svc.week_data("monthly" if kind.startswith("month") else "weekly")
+
+
+class ProposalIn(BaseModel):
+    id: int
+    approve: bool
+
+
+@router.post("/review/proposal")
+async def review_proposal(body: ProposalIn):
+    return {"reply": await review_svc.decide_proposal(body.id, body.approve)}
+
+
+class IdeaIn(BaseModel):
+    id: int
+    action: str
+
+
+@router.post("/review/idea")
+async def review_idea(body: IdeaIn):
+    return {"reply": await review_svc.idea_action(body.id, body.action)}
+
+
+class CompleteIn(BaseModel):
+    kind: str = "weekly"
+    notes: str | None = None
+
+
+@router.post("/review/complete")
+async def review_complete(body: CompleteIn):
+    await review_svc.complete(body.kind, body.notes)
+    return {"ok": True}
+
+
+@router.post("/plan/tomorrow")
+async def plan_tomorrow():
+    date = _now().date() + dt.timedelta(days=1)
+    text = await planner.draft_day(date)
+    return {"reply": text}
+
+
 class CaptureIn(BaseModel):
     text: str
 

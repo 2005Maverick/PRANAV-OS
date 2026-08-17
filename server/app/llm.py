@@ -53,6 +53,9 @@ async def chat(messages: list[dict], system: str | None = None, max_tokens: int 
         return resp.choices[0].message.content
     except Exception as e:
         log.warning("LLM chat failed: %s", e)
+        # deep/lite tier exhausted -> degrade to the daily model once
+        if model and model != config.LLM_MODEL:
+            return await chat(messages, system=system, max_tokens=max_tokens, model=config.LLM_MODEL)
         return None
 
 
@@ -79,4 +82,6 @@ async def json_call(prompt: str, system: str | None = None, max_tokens: int = 40
         return json.loads(raw)
     except Exception as e:
         log.warning("LLM json_call failed: %s", e)
+        if model and model != config.LLM_MODEL:
+            return await json_call(prompt, system=system, max_tokens=max_tokens, model=config.LLM_MODEL)
         return None

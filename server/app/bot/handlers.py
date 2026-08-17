@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, onboarding, planner, protocols, sleep
+from ..services import capture, onboarding, planner, protocols, review, sleep
 
 log = logging.getLogger("bot")
 
@@ -81,6 +81,13 @@ async def cmd_onboard(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not await _owner_gate(update):
         return
     await update.message.reply_text(await onboarding.start())
+
+
+async def cmd_review(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not await _owner_gate(update):
+        return
+    await update.message.reply_text("Reading the week…")
+    await update.message.reply_text(await review.bot_summary())
 
 
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -235,6 +242,7 @@ def register(app: Application):
     app.add_handler(CommandHandler("score", cmd_score))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("onboard", cmd_onboard))
+    app.add_handler(CommandHandler("review", cmd_review))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     app.add_handler(MessageHandler(
         filters.VOICE | filters.VIDEO | filters.VIDEO_NOTE | filters.PHOTO | filters.Document.ALL, on_media))
