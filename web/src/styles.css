@@ -38,7 +38,10 @@ body {
   overflow: hidden;
 }
 .cockpit > * { background: var(--ink); }
-.cockpit main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.cockpit main {
+  min-height: 0; overflow-y: auto; display: flex; flex-direction: column;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
 .cockpit.full { grid-template-columns: 1fr; }
 .cockpit.full .head { grid-column: 1; }
 .cockpit.full main { overflow-y: auto; display: block; }

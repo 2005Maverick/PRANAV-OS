@@ -60,10 +60,12 @@ function elasticLayout(blocks, nowM, availH) {
     const t = segs.reduce((a, g) => a + hFor(g, mid), 0) + GAP_PAD * segs.filter((g) => g.kind === 'block').length
     if (t > availH) hi = mid; else lo = mid
   }
+  // comfort floor: never cram below ~1px/min — overflow scrolls instead
+  const scale = Math.max(lo, 1.0)
   let y = 0
   for (const g of segs) {
     g.y = y
-    g.h = hFor(g, lo)
+    g.h = hFor(g, scale)
     y += g.h + (g.kind === 'block' ? GAP_PAD : 0)
   }
   const yOf = (m) => {
@@ -102,6 +104,16 @@ function Timeline({ today }) {
   const nowM = mins(today.now)
   const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 46, 300))
 
+  // when the day overflows, open scrolled so NOW sits at ~38% of the view
+  const nowY = yOf(nowM)
+  useEffect(() => {
+    const scroller = wrapRef.current?.parentElement
+    if (!scroller) return
+    if (scroller.scrollHeight > scroller.clientHeight + 8) {
+      scroller.scrollTop = Math.max(nowY - scroller.clientHeight * 0.38, 0)
+    }
+  }, [Math.round(nowY), total])
+
   // hour labels via the elastic map; skip any that would crowd (<16px apart)
   const marks = []
   let lastY = -99
@@ -129,7 +141,7 @@ function Timeline({ today }) {
         {segs.filter((g) => g.kind === 'block').map((g) => (
           <Plane key={g.b.id} b={g.b} top={g.y} height={g.h} />
         ))}
-        <div className="nowline" style={{ top: yOf(nowM) }}>
+        <div className="nowline" style={{ top: nowY }}>
           <span className="tag">NOW {today.now}</span>
         </div>
       </div>
