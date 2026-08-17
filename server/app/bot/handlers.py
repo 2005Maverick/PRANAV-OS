@@ -3,7 +3,8 @@ import datetime as dt
 import logging
 import re
 from telegram import Update
-from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
+from telegram.ext import (Application, CallbackQueryHandler, CommandHandler,
+                          ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
 from ..services import (capture, lists_fin, meetings_svc, onboarding, planner,
@@ -104,9 +105,70 @@ async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "/today /plan [tomorrow] /replan /score")
 
 
+# ------------------------------------------------------------- callbacks
+async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    if not q:
+        return
+    owner = await db.get_setting("owner_chat_id")
+    if owner and str(q.message.chat.id) != owner:
+        await q.answer()
+        return
+    data = q.data or ""
+    try:
+        await q.answer()
+    except Exception:
+        pass  # expired/stale callback ids must not kill the action
+    now = dt.datetime.now(config.TZ)
+
+    if data == "day:confirm":
+        await db.execute(
+            "UPDATE days SET status='confirmed', confirmed_at=now() WHERE date=$1", now.date())
+        await sleep.on_wake()
+        await q.edit_message_reply_markup(None)
+        await q.message.reply_text("Armed. First block ping comes at its start. Go.")
+    elif data == "day:adjust":
+        await q.edit_message_reply_markup(None)
+        await q.message.reply_text("Tell me what to change — e.g. `move trading to evening` or `replan: <what changed>`.")
+    elif data.startswith("blk:"):
+        _, action, bid = data.split(":")
+        bid = int(bid)
+        if action == "started":
+            await db.execute(
+                "UPDATE blocks SET status='started', started_at=$2 WHERE id=$1 AND status='planned'", bid, now)
+            await db.execute(
+                "UPDATE nudges SET response='started', responded_at=now() WHERE block_id=$1 AND kind='block_start' AND response IS NULL", bid)
+            try:
+                await q.edit_message_reply_markup(None)
+            except Exception:
+                pass
+            await q.message.reply_text("Go. I'm quiet until the block ends.")
+        elif action == "snooze":
+            await db.execute(
+                "UPDATE blocks SET start_at=start_at + interval '15 minutes', end_at=end_at + interval '15 minutes' WHERE id=$1 AND status='planned'", bid)
+            await db.execute(
+                "DELETE FROM nudges WHERE block_id=$1 AND kind='block_start'", bid)
+            try:
+                await q.edit_message_reply_markup(None)
+            except Exception:
+                pass
+            await q.message.reply_text("Pushed 15 minutes. I'll ping again.")
+        elif action == "skip":
+            await db.execute(
+                "UPDATE blocks SET status='skipped', skip_reason='skipped via button' WHERE id=$1", bid)
+            await db.execute(
+                "UPDATE nudges SET response='skip', responded_at=now() WHERE block_id=$1 AND response IS NULL", bid)
+            try:
+                await q.edit_message_reply_markup(None)
+            except Exception:
+                pass
+            await q.message.reply_text("Skipped, on the record. It shows on Sunday.")
+
+
 # ------------------------------------------------------------- free text
 REPLAN_RE = re.compile(r"^replan\s*[:\-]\s*(.+)", re.I | re.S)
 CAPTURE_HINT = re.compile(r"^(save|note|idea|prompt|read)\s*[:\-]", re.I)
+PLAYLIST_RE = re.compile(r"^playlist\s+for\s+(\w+)\s*[:\-]\s*(\S+)", re.I)
 
 
 async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -190,6 +252,12 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             """INSERT INTO sleep_logs (date, slept_at) VALUES ($1,$2)
                ON CONFLICT (date) DO UPDATE SET slept_at=EXCLUDED.slept_at""", date, now)
         reply = "Logged. Goodnight — I'll shape the morning around it."
+    elif (pl := PLAYLIST_RE.match(text)):
+        slug, url = pl.group(1).lower(), pl.group(2)
+        n = await db.execute(
+            "UPDATE domains SET playlist_url=$2 WHERE slug=$1 OR lower(name) LIKE '%'||$1||'%'", slug, url)
+        reply = (f"Playlist set for {slug} — every {slug} block ping carries it now."
+                 if n != "UPDATE 0" else f"No domain matching “{slug}”. Domains: internship, research, trading, startup, uni, tech, gym.")
     elif (fin := await lists_fin.try_finance(text)):
         reply = fin
     elif (lst := await lists_fin.try_lists(text)):
@@ -274,6 +342,7 @@ def register(app: Application):
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("onboard", cmd_onboard))
     app.add_handler(CommandHandler("review", cmd_review))
+    app.add_handler(CallbackQueryHandler(on_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     app.add_handler(MessageHandler(
         filters.VOICE | filters.VIDEO | filters.VIDEO_NOTE | filters.PHOTO | filters.Document.ALL, on_media))

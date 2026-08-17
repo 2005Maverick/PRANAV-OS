@@ -210,6 +210,13 @@ body {
   color: var(--dim); margin-top: 5px;
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
+.nc-playlist {
+  display: inline-block; margin-top: 8px; font-size: 10.5px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--acid); text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--acid) 35%, transparent);
+  border-radius: 5px; padding: 4px 9px;
+}
 .nc-progress { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .nc-pct { font-size: 10.5px; color: var(--acid); }
 .nc-bar { flex: 1; height: 3px; background: color-mix(in srgb, var(--bone) 10%, transparent); border-radius: 2px; overflow: hidden; }

@@ -228,6 +228,9 @@ function Rail({ rail, today }) {
           <div className="nc-title">{current.title}</div>
           <div className="nc-count mono">{minsLeft}<span className="nc-unit">min left</span></div>
           {current.next_action && <div className="nc-action">→ {current.next_action}</div>}
+          {current.playlist_url && (
+            <a className="nc-playlist mono" href={current.playlist_url} target="_blank" rel="noreferrer">▶ playlist</a>
+          )}
           <div className="nc-progress">
             <span className="nc-pct mono">{pct}%</span>
             <div className="nc-bar"><span style={{ width: `${pct}%` }} /></div>

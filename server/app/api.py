@@ -24,7 +24,8 @@ async def today():
     if day:
         rows = await db.fetch(
             """SELECT b.id, b.title, b.next_action, b.start_at, b.end_at, b.status,
-                      b.is_fixed, d.slug AS domain, d.color
+                      b.is_fixed, d.slug AS domain, d.color,
+                      COALESCE(b.playlist_url, d.playlist_url) AS playlist_url
                FROM blocks b LEFT JOIN domains d ON d.id=b.domain_id
                WHERE b.day_id=$1 ORDER BY b.start_at""", day["id"])
         blocks = [{
@@ -33,6 +34,7 @@ async def today():
             "end": r["end_at"].astimezone(config.TZ).strftime("%H:%M"),
             "status": r["status"], "fixed": r["is_fixed"],
             "domain": r["domain"], "color": r["color"] or "#4A4E57",
+            "playlist_url": r["playlist_url"],
         } for r in rows]
     return {
         "date": str(date),
