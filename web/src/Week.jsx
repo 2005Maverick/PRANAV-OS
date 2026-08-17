@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+const domainCode = (domain) => `var(--m-${domain || 'reward'}, var(--_p-graph))`
+
 function mins(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
   return h * 60 + m
@@ -90,9 +92,9 @@ function WeekPlane({ b, yOf, onMove }) {
     <div className={cls} title={`${b.title} · ${b.start}–${b.end}${b.fixed ? ' · fixed' : ' · click to move'}`}
       onClick={() => !b.fixed && b.status === 'planned' && onMove(b)}
       style={{
-        top, height, '--c': b.color,
-        left: `calc(${w * b.lane}% + 5px)`,
-        width: `calc(${w}% - 10px)`,
+        top, height, '--c': domainCode(b.domain),
+        left: `calc(${w * b.lane}% + 4px)`,
+        width: `calc(${w}% - 8px)`,
         cursor: !b.fixed && b.status === 'planned' ? 'pointer' : 'default',
       }}>
       {height >= 18 && <span className="wt">{b.title}</span>}
@@ -121,19 +123,21 @@ function MoveDialog({ block, onClose, onDone, demo }) {
     }
   }
   return (
-    <div className="day-detail" onClick={onClose}>
-      <div className="dd-panel mv-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="dd-head"><span className="dd-date">Move “{block.title}”</span>
-          <button className="dd-close" onClick={onClose}>×</button></div>
-        <div className="vault-row">
-          <span className="mono dim2">start at</span>
-          <input className="lib-search mono" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
-          <button className="rv-btn dark-btn" onClick={() => apply(false)}>move</button>
+    <div className="mv-overlay" onClick={onClose}>
+      <div className="mv-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="mv-head">
+          <span className="mv-title">Move “{block.title}”</span>
+          <button className="mv-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="mv-row">
+          <span className="anno" style={{ color: 'var(--text-muted)' }}>start at</span>
+          <input className="field anno" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
+          <button className="btn" onClick={() => apply(false)}>Move</button>
         </div>
         {msg && (
-          <div className="mv-msg mono" style={{ color: msg.ok ? 'var(--acid)' : 'var(--amber)' }}>
+          <div className="mv-msg" style={{ color: msg.ok ? 'var(--success)' : 'var(--warning)' }}>
             {msg.text}
-            {msg.conflict && <button className="rv-btn dark-btn" style={{ marginLeft: 10 }} onClick={() => apply(true)}>move anyway</button>}
+            {msg.conflict && <button className="btn" onClick={() => apply(true)}>Move anyway</button>}
           </div>
         )}
       </div>
@@ -146,7 +150,7 @@ function Spectrum({ blocks }) {
   return (
     <div className="spectrum">
       {blocks.map((b) => (
-        <span key={b.id} style={{ flex: (b.e - b.s) / total, background: b.color }}
+        <span key={b.id} style={{ flex: (b.e - b.s) / total, background: domainCode(b.domain) }}
           className={b.status === 'skipped' || b.status === 'sacrificed' ? 'sp-dim' : ''} />
       ))}
     </div>
@@ -177,8 +181,9 @@ export default function Week({ days, rail, now, demo }) {
   const ax = sharedElastic(laid, 620)
   if (!ax) {
     return (
-      <div className="empty-day">
-        <div className="voice">Nothing planned this week yet.</div>
+      <div className="sheet-empty">
+        <span className="cap se-title">Nothing planned this week yet</span>
+        <p className="se-body">Days appear here as they're drafted — tonight's close draws tomorrow.</p>
       </div>
     )
   }
@@ -193,11 +198,11 @@ export default function Week({ days, rail, now, demo }) {
   return (
     <div className="week-page">
       {rail?.floors && (
-        <div className="week-floors">
-          <span className="un-label">this week</span>
+        <div className="week-mins">
+          <span className="cap">Minimums</span>
           {rail.floors.map((f) => (
-            <span key={f.slug} className={`wk-floor ${f.ok ? 'ok' : ''}`}>
-              {f.name} <span className="mono">{f.done}/{f.target}</span>
+            <span key={f.slug} className={`wm-item ${f.ok ? 'ok' : ''}`}>
+              {f.name} <span className="anno">{f.done}/{f.target}</span>
             </span>
           ))}
         </div>
@@ -238,7 +243,7 @@ export default function Week({ days, rail, now, demo }) {
       </div>
       {ghost && isLateWeek && (
         <div className="ghost-week">
-          <div className="un-label">next week — the fixed skeleton</div>
+          <span className="cap">Next week — fixed skeleton</span>
           <div className="ghost-row">
             {ghost.days.map((g) => (
               <div key={g.name} className="ghost-day">
