@@ -342,47 +342,35 @@ function TitleBlock({ view, setView, today, onArm, arming }) {
     weekday: 'short', day: '2-digit', month: 'short',
   })
   return (
-    <header className="titleblock">
-      <div className="tb-cell tb-sheetno" aria-hidden="true">
-        <span className="tb-label">Sheet</span>
-        <span className="tb-value">{sheet[1]}</span>
+    <header className="masthead">
+      <div className="mh-id">
+        <span className="mh-no anno" aria-hidden="true">{sheet[1]}</span>
+        <h1 className="mh-name">{sheet[2]}</h1>
       </div>
-      <div className="tb-cell tb-project">
-        <span className="tb-label">Project</span>
-        <span className="tb-value">Pranav OS · {sheet[2]}</span>
-      </div>
-      <div className="tb-cell">
-        <span className="tb-label">Date</span>
-        <span className="tb-value quiet">{dateStr}</span>
-      </div>
-      <div className="tb-cell tb-status">
-        <span className="tb-label">Status</span>
-        <span className="tb-value quiet">
-          <span className={`status-dot ${today.status || 'draft'}`} aria-hidden="true" />
-          {today.status || 'no plan'}
-        </span>
-      </div>
-      {today.status === 'draft' && (
-        <div className="tb-cell tb-action">
-          <button className="btn btn-primary" onClick={onArm} disabled={arming}>
-            {arming ? 'Arming…' : 'Arm the day'}
-          </button>
-        </div>
-      )}
-      <nav className="tb-cell tb-nav" style={{ marginLeft: today.status === 'draft' ? 0 : 'auto' }}
-        aria-label="Sheets">
+      <span className="mh-meta">
+        {dateStr}
+        <span className="mh-sep" aria-hidden="true">·</span>
+        <span className={`status-dot ${today.status || 'draft'}`} aria-hidden="true" />
+        {today.status || 'no plan'}
+      </span>
+      <nav className="mh-nav" aria-label="Sheets">
         {SHEETS.map(([v, no, name]) => (
           <button key={v} className={`tb-tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
-            {no} {name}
+            {name}
           </button>
         ))}
         <select className="tb-tab more" aria-label="Sheet index"
           value={INDEX.some(([v]) => v === view) ? view : ''}
           onChange={(e) => e.target.value && setView(e.target.value)}>
-          <option value="" disabled>Index ▾</option>
-          {INDEX.map(([v, no, name]) => <option key={v} value={v}>{no} {name}</option>)}
+          <option value="" disabled>More</option>
+          {INDEX.map(([v, no, name]) => <option key={v} value={v}>{name}</option>)}
         </select>
       </nav>
+      {today.status === 'draft' && (
+        <button className="btn btn-primary" onClick={onArm} disabled={arming}>
+          {arming ? 'Arming…' : 'Arm the day'}
+        </button>
+      )}
     </header>
   )
 }
