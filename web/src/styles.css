@@ -544,6 +544,74 @@ body {
 }
 .slp-proto:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
 
+/* ---------- vault ---------- */
+.vault-box {
+  background: var(--ink-lift); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px 18px;
+}
+.vault-box .label {
+  font-family: var(--font-inst); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 10px;
+}
+.vault-row { display: flex; gap: 10px; align-items: center; }
+.vault-form { display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+.vault-secret {
+  font-size: 13px; color: var(--acid);
+  background: var(--ink); border: 1px dashed var(--line);
+  border-radius: 6px; padding: 6px 10px; letter-spacing: 0.04em;
+}
+
+/* ---------- talk room ---------- */
+.talk-wrap {
+  display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px;
+  padding: 20px 40px 30px; width: 100%; max-width: 1150px;
+  flex: 1; min-height: 0;
+}
+@media (max-width: 900px) { .talk-wrap { grid-template-columns: 1fr; } }
+.talk-main { display: flex; flex-direction: column; min-height: 0; }
+.talk-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 14px; scrollbar-width: thin; }
+.talk-msg { display: flex; }
+.talk-msg.user { justify-content: flex-end; }
+.talk-bubble {
+  max-width: 78%; padding: 10px 14px; border-radius: 12px;
+  font-size: 13.5px; line-height: 1.55; white-space: pre-wrap;
+  background: var(--ink-lift); border: 1px solid var(--line);
+}
+.talk-msg.user .talk-bubble {
+  background: color-mix(in srgb, var(--acid) 9%, var(--ink-lift));
+  border-color: color-mix(in srgb, var(--acid) 22%, var(--line));
+}
+.talk-input {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink-lift); border: 1px solid var(--line); border-radius: 9px;
+  padding: 3px 5px 3px 14px;
+}
+.talk-input:focus-within { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
+.talk-input input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--bone); font-family: var(--font-ui); font-size: 13.5px; padding: 10px 0;
+}
+.talk-side { overflow-y: auto; scrollbar-width: thin; }
+.talk-side .label {
+  font-family: var(--font-inst); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--faint);
+}
+
+/* ---------- rules ---------- */
+.rules-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px; }
+@media (max-width: 900px) { .rules-cols { grid-template-columns: 1fr; } }
+.rules-num {
+  width: 52px; background: var(--ink); color: var(--bone);
+  border: 1px solid var(--line); border-radius: 5px;
+  font-size: 12px; padding: 4px 7px; text-align: right;
+}
+.rules-set {
+  width: 130px; background: var(--ink); color: var(--bone);
+  border: 1px solid var(--line); border-radius: 5px;
+  font-size: 12px; padding: 4px 8px; margin-left: auto;
+}
+.rules-num:focus, .rules-set:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); outline: none; }
+
 /* ---------- week ---------- */
 .week-floors {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

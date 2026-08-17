@@ -1,0 +1,7 @@
+decide reply: Decision logged — “Vault Key Derivation and Pointers”. It's citable fo
+decisions has TESTDEC: False
+rule added: True
+floor tech now: [4]
+setting: 50
+non-whitelisted refused: {'ok': False, 'error': 'unknown setting'}
+cleanup done

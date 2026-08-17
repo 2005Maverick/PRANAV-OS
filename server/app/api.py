@@ -93,6 +93,167 @@ async def plan_tomorrow():
     return {"reply": text}
 
 
+from . import llm  # noqa: E402
+from .services import vault_svc  # noqa: E402
+
+
+@router.get("/talk")
+async def talk_get():
+    msgs = await db.fetch(
+        "SELECT role, content, created_at::text FROM chat_messages WHERE surface='talk' ORDER BY id DESC LIMIT 40")
+    decisions = await db.fetch(
+        "SELECT id, topic, decision, created_at::date::text AS created FROM decisions ORDER BY id DESC LIMIT 20")
+    return {"messages": [dict(m) for m in reversed(msgs)],
+            "decisions": [dict(d) for d in decisions]}
+
+
+class TalkIn(BaseModel):
+    message: str
+
+
+@router.post("/talk")
+async def talk_post(body: TalkIn):
+    text = body.message.strip()
+    if not text:
+        return {"reply": ""}
+    await db.execute(
+        "INSERT INTO chat_messages (surface, role, content) VALUES ('talk','user',$1)", text[:4000])
+    if text.lower().startswith("decide:"):
+        decision = text[7:].strip()
+        parsed = await llm.json_call(
+            f'Split into topic (<=6 words) and the decision itself: "{decision}". '
+            'JSON: {"topic":"...","decision":"..."}', model=config.LLM_MODEL_LITE)
+        topic = (parsed or {}).get("topic", decision[:60])
+        body_txt = (parsed or {}).get("decision", decision)
+        await db.execute(
+            "INSERT INTO decisions (topic, decision) VALUES ($1,$2)", topic[:120], body_txt)
+        reply = f"Decision logged — “{topic}”. It's citable forever."
+    else:
+        recent = await db.fetch(
+            "SELECT role, content FROM chat_messages WHERE surface IN ('talk','bot') ORDER BY id DESC LIMIT 20")
+        msgs = [{"role": r["role"] if r["role"] in ("user", "assistant") else "user",
+                 "content": r["content"]} for r in reversed(recent)]
+        decs = await db.fetch("SELECT topic, decision FROM decisions ORDER BY id DESC LIMIT 10")
+        dec_txt = "\n".join(f"- {d['topic']}: {d['decision']}" for d in decs)
+        reply = await llm.chat(
+            msgs,
+            system=llm.SYSTEM_PERSONA + "\n\nThis is the cockpit Talk room — long-form thinking. "
+            f"Past decisions on record:\n{dec_txt}\n"
+            "Push back with his own history. If he lands on a decision, suggest `decide: ...` to log it.")
+        if reply is None:
+            reply = "Brain unavailable right now — try again in a minute."
+    await db.execute(
+        "INSERT INTO chat_messages (surface, role, content) VALUES ('talk','assistant',$1)", reply[:4000])
+    return {"reply": reply}
+
+
+SETTING_KEYS = {"checkin_minutes", "nudge_tone", "checkin_start", "checkin_end",
+                "reading_day", "reading_hour", "usual_sleep", "usual_wake",
+                "masters_date", "sleep_target_hours"}
+
+
+@router.get("/rules")
+async def rules_get():
+    rules = await db.fetch(
+        "SELECT id, kind, rule_text, source, approved_at::date::text AS approved FROM rules WHERE active ORDER BY id DESC")
+    floors = await db.fetch(
+        "SELECT slug, name, floor_type, floor_target, floor_minutes FROM domains WHERE active ORDER BY sort_order")
+    settings = {}
+    for k in sorted(SETTING_KEYS):
+        settings[k] = await db.get_setting(k)
+    proposals = await db.fetch(
+        "SELECT id, observation, proposal FROM pattern_proposals WHERE status='pending' ORDER BY id DESC")
+    return {"rules": [dict(r) for r in rules], "floors": [dict(f) for f in floors],
+            "settings": settings, "proposals": [dict(p) for p in proposals]}
+
+
+class RuleIn(BaseModel):
+    text: str
+
+
+@router.post("/rules/rule")
+async def rules_add(body: RuleIn):
+    await db.execute(
+        "INSERT INTO rules (kind, rule_text, source) VALUES ('preference',$1,'explicit')", body.text[:300])
+    return {"ok": True}
+
+
+class RuleOffIn(BaseModel):
+    id: int
+
+
+@router.post("/rules/rule-off")
+async def rules_off(body: RuleOffIn):
+    await db.execute("UPDATE rules SET active=FALSE WHERE id=$1", body.id)
+    return {"ok": True}
+
+
+class FloorIn(BaseModel):
+    slug: str
+    target: int | None = None
+    minutes: int | None = None
+
+
+@router.post("/rules/floor")
+async def rules_floor(body: FloorIn):
+    await db.execute(
+        "UPDATE domains SET floor_target=COALESCE($2,floor_target), floor_minutes=COALESCE($3,floor_minutes) WHERE slug=$1",
+        body.slug, body.target, body.minutes)
+    return {"ok": True}
+
+
+class SettingIn(BaseModel):
+    key: str
+    value: str
+
+
+@router.post("/rules/setting")
+async def rules_setting(body: SettingIn):
+    if body.key not in SETTING_KEYS:
+        return {"ok": False, "error": "unknown setting"}
+    await db.set_setting(body.key, body.value)
+    return {"ok": True}
+
+
+@router.get("/vault/status")
+async def vault_status():
+    n = await db.fetchval("SELECT COUNT(*) FROM vault_entries")
+    return {"has_password": await vault_svc.has_password(), "entries": n}
+
+
+class VaultSetupIn(BaseModel):
+    password: str
+
+
+@router.post("/vault/setup")
+async def vault_setup(body: VaultSetupIn):
+    return {"reply": await vault_svc.setup(body.password)}
+
+
+class VaultAddIn(BaseModel):
+    password: str
+    label: str
+    pointer: str | None = None
+    secret: str | None = None
+
+
+@router.post("/vault/add")
+async def vault_add(body: VaultAddIn):
+    return {"reply": await vault_svc.add(body.password, body.label, body.pointer, body.secret)}
+
+
+class VaultUnlockIn(BaseModel):
+    password: str
+
+
+@router.post("/vault/unlock")
+async def vault_unlock(body: VaultUnlockIn):
+    entries = await vault_svc.unlock(body.password)
+    if entries is None:
+        return {"ok": False, "entries": None}
+    return {"ok": True, "entries": entries}
+
+
 @router.get("/arcs")
 async def arcs():
     today_d = _now().date()

@@ -252,6 +252,9 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             """INSERT INTO sleep_logs (date, slept_at) VALUES ($1,$2)
                ON CONFLICT (date) DO UPDATE SET slept_at=EXCLUDED.slept_at""", date, now)
         reply = "Logged. Goodnight — I'll shape the morning around it."
+    elif low.startswith("vault "):
+        from ..services import vault_svc
+        reply = await vault_svc.pointers(text[6:].strip())
     elif (pl := PLAYLIST_RE.match(text)):
         slug, url = pl.group(1).lower(), pl.group(2)
         n = await db.execute(

@@ -1,0 +1,10 @@
+setup: ok
+setup again (want refuse): Vault password already set.
+add secret: ok
+add pointer: ok
+add wrong pw (want refuse): wrong password
+unlock: [('TESTV wifi', 'encrypted', 'hostel@2026'), ('TESTV staging', 'pointer', None)]
+wrong unlock (want None): None
+access log rows: 2
+bot pointers: • TESTV wifi — locked; open the cockpit Vault to view | • TESTV staging → Bitwarden → staging
+cleanup done (vault reset for real setup)
