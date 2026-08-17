@@ -20,7 +20,14 @@
   --_redline-d: oklch(0.44 0.170 29);
   --_ok:        oklch(0.45 0.100 150);
   --_warn:      oklch(0.50 0.110 60);
-  --_m-graph: var(--_ink-mut);
+  --_p-sienna: oklch(0.50 0.105 60);
+  --_p-olive:  oklch(0.52 0.100 105);
+  --_p-moss:   oklch(0.50 0.100 140);
+  --_p-virid:  oklch(0.50 0.095 170);
+  --_p-ultra:  oklch(0.48 0.115 245);
+  --_p-violet: oklch(0.48 0.105 300);
+  --_p-graph:  oklch(0.50 0.015 260);
+  --_p-felt:   oklch(0.52 0.045 170);
 
   /* ---------- 2 · semantic tokens ---------- */
   --bg: var(--_paper);
@@ -39,10 +46,15 @@
   --success: var(--_ok);
   --warning: var(--_warn);
   --danger: var(--_redline);
-  /* domains are identified by label + line treatment; ink only */
-  --m-internship: var(--_ink); --m-startup: var(--_ink); --m-tech: var(--_ink);
-  --m-research: var(--_ink); --m-trading: var(--_ink); --m-gym: var(--_ink);
-  --m-uni: var(--_ink-mut); --m-reward: var(--_ink-fnt);
+  /* domain pencil codes: edge + tick + faint wash tint */
+  --m-internship: var(--_p-sienna);
+  --m-startup: var(--_p-olive);
+  --m-tech: var(--_p-moss);
+  --m-research: var(--_p-virid);
+  --m-trading: var(--_p-ultra);
+  --m-gym: var(--_p-violet);
+  --m-uni: var(--_p-graph);
+  --m-reward: var(--_p-felt);
 
   /* ---------- 3 · type / space / radius / shadow / motion ---------- */
   --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -244,8 +256,8 @@ button, input, select, textarea { font-family: inherit; }
 .room {
   position: absolute; left: 64px; right: var(--s-4);
   border-radius: var(--r-2); overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--line-ink);
+  background: color-mix(in oklch, var(--c) 7%, var(--surface));
+  border: 1px solid color-mix(in oklch, var(--c) 30%, var(--line-ink));
   border-left: 3px solid var(--c);
   padding: var(--s-3) var(--s-4);
   display: flex; flex-direction: column; justify-content: flex-start;
@@ -264,8 +276,8 @@ button, input, select, textarea { font-family: inherit; }
 }
 .swatch {
   display: inline-block; width: 9px; height: 9px;
-  background: transparent; border: 1.5px solid var(--c);
-  border-radius: var(--r-1); margin-right: var(--s-2);
+  background: var(--c); border-radius: var(--r-1);
+  margin-right: var(--s-2);
 }
 .room .r-time {
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 500;
@@ -341,9 +353,9 @@ button, input, select, textarea { font-family: inherit; }
 .current-work {
   margin: var(--s-4) var(--s-4) 0; padding: var(--s-4) var(--s-4) var(--s-4);
   border-radius: var(--r-3);
-  background: var(--surface);
-  border: 1px solid var(--line-ink);
-  border-left: 3px solid var(--c, var(--_m-graph));
+  background: color-mix(in oklch, var(--c, var(--_p-graph)) 7%, var(--surface));
+  border: 1px solid color-mix(in oklch, var(--c, var(--_p-graph)) 30%, var(--line-ink));
+  border-left: 3px solid var(--c, var(--_p-graph));
 }
 .cw-dom {
   font-family: var(--font-anno); font-size: var(--fs-anno);
