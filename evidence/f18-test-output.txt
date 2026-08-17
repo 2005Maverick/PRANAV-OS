@@ -1,0 +1,3 @@
+no-key today: 401 | keyed today: 200
+no-key vault: 401 | keyed vault: 200 {"has_password":false,"entries":0}
+tick: 200 {"ok":true,"errors":null}

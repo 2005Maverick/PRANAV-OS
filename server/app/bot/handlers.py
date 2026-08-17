@@ -263,7 +263,6 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                ON CONFLICT (date) DO UPDATE SET slept_at=EXCLUDED.slept_at""", date, now)
         reply = "Logged. Goodnight — I'll shape the morning around it."
     elif low == "vault reset confirm":
-        from ..services import vault_svc as _v
         await db.execute("DELETE FROM vault_access_log")
         await db.execute("DELETE FROM vault_entries")
         await db.execute("DELETE FROM settings WHERE key IN ('vault_salt','vault_verifier')")
