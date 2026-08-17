@@ -391,6 +391,19 @@ body {
   background: color-mix(in srgb, var(--acid) 3%, var(--ink-lift));
 }
 .wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line-soft); opacity: 0.55; }
+.wk-quiet {
+  position: absolute; left: 0; right: 0;
+  background: repeating-linear-gradient(-45deg,
+    transparent, transparent 5px,
+    rgba(255,255,255,0.012) 5px, rgba(255,255,255,0.012) 6px);
+  border-top: 1px dashed var(--line-soft); border-bottom: 1px dashed var(--line-soft);
+  opacity: 0.9;
+}
+.wk-now {
+  position: absolute; left: 0; right: 0; z-index: 3;
+  border-top: 1.5px solid var(--acid);
+  box-shadow: 0 0 8px -2px var(--acid);
+}
 .wplane {
   position: absolute;
   border-radius: 5px; overflow: hidden; padding: 4px 8px;
