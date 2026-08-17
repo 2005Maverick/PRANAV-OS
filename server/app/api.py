@@ -1,7 +1,10 @@
-"""Cockpit API — read endpoints + quick capture."""
+"""Cockpit API — read endpoints + quick capture. Every route requires the
+cockpit key (X-API-Key == TICK_KEY env): single-user system, single shared
+secret with the cron tick."""
 import datetime as dt
+import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from . import config, db
@@ -9,7 +12,13 @@ from .services import capture as capture_svc
 from .services import planner
 from .services import sleep as sleep_svc
 
-router = APIRouter(prefix="/api")
+
+async def require_key(x_api_key: str = Header(default="")):
+    expected = os.environ.get("TICK_KEY", "")
+    if not expected or x_api_key != expected:
+        raise HTTPException(status_code=401, detail="cockpit key required")
+
+router = APIRouter(prefix="/api", dependencies=[Depends(require_key)])
 
 
 def _now() -> dt.datetime:

@@ -14,6 +14,33 @@ const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
 // ?demo — a fully-lived-in day so the design can be judged before real data exists
 const DEMO = typeof window !== 'undefined' && window.location.search.includes('demo')
 
+// every API call carries the cockpit key (single-user auth)
+if (typeof window !== 'undefined' && !window.__keyedFetch) {
+  window.__keyedFetch = true
+  const orig = window.fetch.bind(window)
+  window.fetch = (url, opts = {}) => {
+    if (String(url).startsWith(API)) {
+      opts = { ...opts, headers: { ...(opts.headers || {}), 'X-API-Key': localStorage.getItem('pranav_key') || '' } }
+    }
+    return orig(url, opts)
+  }
+}
+
+function KeyGate({ onSet }) {
+  const [val, setVal] = useState('')
+  return (
+    <div className="loading" style={{ flexDirection: 'column', gap: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div>PRANAV OS · COCKPIT KEY</div>
+      <form onSubmit={(e) => { e.preventDefault(); if (val.trim()) { localStorage.setItem('pranav_key', val.trim()); onSet() } }}
+        style={{ display: 'flex', gap: 8 }}>
+        <input className="lib-search" type="password" autoFocus value={val}
+          onChange={(e) => setVal(e.target.value)} placeholder="paste the key" />
+        <button className="rv-btn dark-btn" type="submit">enter</button>
+      </form>
+    </div>
+  )
+}
+
 const HOUR_PX = 52
 
 function mins(hhmm) {
@@ -316,6 +343,8 @@ export default function App() {
   const [rail, setRail] = useState(null)
   const [week, setWeek] = useState(null)
   const [wall, setWall] = useState(null)
+  const [hasKey, setHasKey] = useState(
+    DEMO || (typeof window !== 'undefined' && !!localStorage.getItem('pranav_key')))
 
   useEffect(() => {
     if (DEMO) {
@@ -334,8 +363,9 @@ export default function App() {
     load()
     const id = setInterval(load, 60_000)
     return () => clearInterval(id)
-  }, [])
+  }, [hasKey])
 
+  if (!hasKey) return <KeyGate onSet={() => setHasKey(true)} />
   if (!today || !rail) return <div className="loading">Pranav OS · connecting</div>
 
   const titles = {

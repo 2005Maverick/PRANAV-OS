@@ -18,9 +18,13 @@ from .bot import handlers
 
 log = logging.getLogger("web")
 
-WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "hook")
-TICK_KEY = os.environ.get("TICK_KEY", "tick")
+WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
+TICK_KEY = os.environ.get("TICK_KEY", "")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")  # e.g. https://pranav-os.onrender.com
+
+# prod (webhook mode) must never run on guessable secrets
+if WEBHOOK_URL and (len(WEBHOOK_SECRET) < 8 or len(TICK_KEY) < 8):
+    raise RuntimeError("WEBHOOK_SECRET and TICK_KEY must be set to strong values in production")
 
 ptb: Application | None = None
 

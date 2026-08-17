@@ -110,9 +110,19 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     if not q:
         return
+    chat = q.message.chat if q.message else update.effective_chat
     owner = await db.get_setting("owner_chat_id")
-    if owner and str(q.message.chat.id) != owner:
-        await q.answer()
+    if owner and (chat is None or str(chat.id) != owner):
+        try:
+            await q.answer()
+        except Exception:
+            pass
+        return
+    if q.message is None:
+        try:
+            await q.answer("That button expired — say it in words instead.")
+        except Exception:
+            pass
         return
     data = q.data or ""
     try:
@@ -252,6 +262,14 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             """INSERT INTO sleep_logs (date, slept_at) VALUES ($1,$2)
                ON CONFLICT (date) DO UPDATE SET slept_at=EXCLUDED.slept_at""", date, now)
         reply = "Logged. Goodnight — I'll shape the morning around it."
+    elif low == "vault reset confirm":
+        from ..services import vault_svc as _v
+        await db.execute("DELETE FROM vault_access_log")
+        await db.execute("DELETE FROM vault_entries")
+        await db.execute("DELETE FROM settings WHERE key IN ('vault_salt','vault_verifier')")
+        reply = "Vault wiped — entries and password gone. Set a new password from the cockpit."
+    elif low == "vault reset":
+        reply = "This deletes ALL vault entries and the password. Say `vault reset confirm` to proceed."
     elif low.startswith("vault "):
         from ..services import vault_svc
         reply = await vault_svc.pointers(text[6:].strip())
