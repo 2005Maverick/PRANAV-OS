@@ -15,10 +15,8 @@ function mins(hhmm) {
   return h * 60 + m
 }
 
-function Plane({ b, dayStart, hourPx = HOUR_PX }) {
-  const top = ((mins(b.start) - dayStart * 60) / 60) * hourPx
-  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * hourPx - 6, 16)
-  const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
+function Plane({ b, top, height }) {
+  const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 40 ? 'slim' : ''].join(' ')
   return (
     <div className={cls} style={{ top, height, '--c': b.color }}>
       <div className="row">
@@ -28,9 +26,56 @@ function Plane({ b, dayStart, hourPx = HOUR_PX }) {
         </span>
         <span className="time">{b.start}–{b.end}</span>
       </div>
-      {b.next_action && height >= 60 && <div className="na">→ {b.next_action}</div>}
+      {b.next_action && height >= 64 && <div className="na">→ {b.next_action}</div>}
     </div>
   )
+}
+
+// Elastic time: blocks get a readable minimum height; gaps compress to pay
+// for it. A binary search finds the scale where everything exactly fits.
+function elasticLayout(blocks, nowM, availH) {
+  const sorted = [...blocks].sort((a, b) => mins(a.start) - mins(b.start))
+  const first = Math.min(...sorted.map((b) => mins(b.start)), nowM)
+  const last = Math.max(...sorted.map((b) => mins(b.end)), nowM)
+  const d0 = Math.max(Math.floor(first / 60) * 60, 0)
+  const d1 = Math.min(Math.ceil(last / 60) * 60, 24 * 60)
+
+  const segs = []
+  let cur = d0
+  for (const b of sorted) {
+    const s = mins(b.start), e = mins(b.end)
+    if (s > cur) segs.push({ kind: 'gap', s: cur, d: s - cur })
+    segs.push({ kind: 'block', s, d: Math.max(e - s, 1), b })
+    cur = Math.max(cur, e)
+  }
+  if (cur < d1) segs.push({ kind: 'gap', s: cur, d: d1 - cur })
+
+  const GAP_PAD = 6 // vertical breathing between cards
+  const hFor = (g, sc) => g.kind === 'block'
+    ? Math.max(g.d * sc, 44)
+    : Math.min(Math.max(g.d * sc, g.d >= 30 ? 10 : 2), 64)
+  let lo = 0.05, hi = 6
+  for (let i = 0; i < 26; i++) {
+    const mid = (lo + hi) / 2
+    const t = segs.reduce((a, g) => a + hFor(g, mid), 0) + GAP_PAD * segs.filter((g) => g.kind === 'block').length
+    if (t > availH) hi = mid; else lo = mid
+  }
+  let y = 0
+  for (const g of segs) {
+    g.y = y
+    g.h = hFor(g, lo)
+    y += g.h + (g.kind === 'block' ? GAP_PAD : 0)
+  }
+  const yOf = (m) => {
+    for (const g of segs) {
+      if (m <= g.s + g.d) {
+        const f = Math.min(Math.max((m - g.s) / g.d, 0), 1)
+        return g.y + f * g.h
+      }
+    }
+    return y
+  }
+  return { segs, yOf, total: y, d0, d1 }
 }
 
 function Timeline({ today }) {
@@ -54,26 +99,35 @@ function Timeline({ today }) {
         <div className="hint">tell the bot: /plan — or wait for tonight's draft</div>
       </div>
     )
-  const firstMin = Math.min(...today.blocks.map((b) => mins(b.start)), mins(today.now))
-  const lastMin = Math.max(...today.blocks.map((b) => mins(b.end)), mins(today.now))
-  const dayStart = Math.max(Math.floor(firstMin / 60), 0)
-  const dayEnd = Math.min(Math.ceil(lastMin / 60), 24)
-  const span = Math.max(dayEnd - dayStart, 1)
-  // fit the whole day to the available height; never below a readable floor
-  const hourPx = Math.max(wrapH ? (wrapH - 40) / span : HOUR_PX, 28)
-  const hours = Array.from({ length: span + 1 }, (_, i) => dayStart + i)
-  const nowTop = ((mins(today.now) - dayStart * 60) / 60) * hourPx
+  const nowM = mins(today.now)
+  const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 40, 300))
+
+  // hour labels via the elastic map; skip any that would crowd (<16px apart)
+  const marks = []
+  let lastY = -99
+  for (let h = Math.ceil(d0 / 60); h <= d1 / 60; h++) {
+    const y = yOf(h * 60)
+    if (y - lastY >= 16) { marks.push({ h, y }); lastY = y }
+  }
+  const fmtGap = (m) => `${m >= 60 ? Math.floor(m / 60) + 'h ' : ''}${m % 60 ? (m % 60) + 'm' : ''}`.trim()
   return (
     <div className="timeline" ref={wrapRef}>
-      <div className="tl-grid" style={{ height: span * hourPx }}>
-        {hours.map((h) => (
-          <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`} style={{ top: (h - dayStart) * hourPx }}>
+      <div className="tl-grid" style={{ height: total }}>
+        {marks.map(({ h, y }) => (
+          <div key={h} className={`tl-hour ${h % 3 === 0 ? 'major' : ''}`} style={{ top: y }}>
             <span className="h">{String(h).padStart(2, '0')}:00</span>
-            <span className="rule" />
+            {h % 3 === 0 && <span className="rule" />}
           </div>
         ))}
-        {today.blocks.map((b) => <Plane key={b.id} b={b} dayStart={dayStart} hourPx={hourPx} />)}
-        <div className="nowline" style={{ top: nowTop }}>
+        {segs.filter((g) => g.kind === 'gap' && g.d >= 45).map((g) => (
+          <div key={`g${g.s}`} className="gap-tag" style={{ top: g.y + g.h / 2 }}>
+            {fmtGap(g.d)} free
+          </div>
+        ))}
+        {segs.filter((g) => g.kind === 'block').map((g) => (
+          <Plane key={g.b.id} b={g.b} top={g.y} height={g.h} />
+        ))}
+        <div className="nowline" style={{ top: yOf(nowM) }}>
           <span className="tag">NOW {today.now}</span>
         </div>
       </div>
