@@ -817,18 +817,13 @@ button, input, select, textarea { font-family: inherit; }
 .wcol-head .wdate { font-family: var(--font-anno); font-size: var(--fs-anno); color: var(--text-faint); }
 .wcol-head .whrs { margin-left: auto; font-family: var(--font-anno); font-size: var(--fs-anno); color: var(--text-muted); }
 .wcol-grid {
-  position: relative; border-left: 1px solid var(--border);
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--r-2);
+  border: 1px solid var(--border-faint);
 }
-.wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-faint); }
-.wk-quiet {
-  position: absolute; left: 0; right: 0;
-  background: repeating-linear-gradient(-45deg,
-    transparent 0 5px, oklch(0.26 0.015 260 / 0.06) 5px 6px);
-}
-[data-theme="dark"] .wk-quiet {
-  background: repeating-linear-gradient(-45deg,
-    transparent 0 5px, oklch(0.93 0.006 90 / 0.07) 5px 6px);
-}
+.wk-rule { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-faint); opacity: 0.6; }
+.wk-quiet { position: absolute; left: 0; right: 0; }
 .wk-now {
   position: absolute; left: 0; right: 0; z-index: 3;
   border-top: 2px solid var(--accent);
@@ -836,10 +831,15 @@ button, input, select, textarea { font-family: inherit; }
 .wplane {
   position: absolute; overflow: hidden;
   border-radius: var(--r-1); padding: var(--s-1) var(--s-2);
-  background: color-mix(in oklch, var(--c) 7%, var(--surface));
-  border: 1px solid color-mix(in oklch, var(--c) 30%, var(--line-ink));
-  border-left: 2px solid var(--c);
+  background: color-mix(in oklch, var(--c) 13%, var(--bg));
+  border: 1px solid color-mix(in oklch, var(--c) 45%, var(--line-ink));
+  border-left: 3px solid var(--c);
 }
+[data-theme="dark"] .wplane {
+  background: color-mix(in oklch, var(--c) 36%, oklch(0.23 0 0));
+  border-color: color-mix(in oklch, var(--c) 60%, var(--line-ink));
+}
+[data-theme="dark"] .wplane .wtime { color: oklch(0.83 0.008 90); }
 .wplane .wt {
   display: block; font-size: var(--fs-ui); font-weight: 500; line-height: 1.3;
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
@@ -854,14 +854,14 @@ button, input, select, textarea { font-family: inherit; }
 .wplane.fixed {
   background:
     repeating-linear-gradient(45deg,
-      transparent 0 5px, oklch(0.26 0.015 260 / 0.14) 5px 6px),
-    color-mix(in oklch, var(--c) 5%, var(--surface));
+      transparent 0 6px, oklch(0.26 0.015 260 / 0.20) 6px 7.5px),
+    color-mix(in oklch, var(--c) 8%, var(--bg));
 }
 [data-theme="dark"] .wplane.fixed {
   background:
     repeating-linear-gradient(45deg,
-      transparent 0 5px, oklch(0.93 0.006 90 / 0.10) 5px 6px),
-    color-mix(in oklch, var(--c) 7%, var(--surface));
+      transparent 0 6px, oklch(0 0 0 / 0.35) 6px 7.5px),
+    color-mix(in oklch, var(--c) 30%, oklch(0.21 0 0));
 }
 .spectrum { display: flex; gap: 2px; height: 4px; margin-top: var(--s-2); border-radius: var(--r-1); overflow: hidden; }
 .spectrum span { border-radius: var(--r-1); }
