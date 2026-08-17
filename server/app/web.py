@@ -67,10 +67,17 @@ async def webhook(secret: str, request: Request):
 
 @app.get("/tick")
 async def tick(key: str = ""):
-    """One heartbeat: block pings + brief + evening close. Idempotent."""
+    """One heartbeat: block pings + brief + evening close. Idempotent, and one
+    failing engine never kills the others."""
     if key != TICK_KEY:
         return Response(status_code=403)
-    await scheduler.tick_blocks(ptb)
-    await scheduler.morning_brief_tick(ptb)
-    await scheduler.maybe_evening_close(ptb)
-    return {"ok": True}
+    errors = []
+    for name, fn in (("blocks", scheduler.tick_blocks),
+                     ("brief", scheduler.morning_brief_tick),
+                     ("close", scheduler.maybe_evening_close)):
+        try:
+            await fn(ptb)
+        except Exception as e:
+            log.exception("tick engine %s failed", name)
+            errors.append(f"{name}: {type(e).__name__}")
+    return {"ok": not errors, "errors": errors or None}

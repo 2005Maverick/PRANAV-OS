@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "<string>", line 15, in m
+  File "C:\Users\Dell\Desktop\pranav-os\server\app\scheduler.py", line 145, in maybe_evening_close
+    await evening_close_job(app)
+  File "C:\Users\Dell\Desktop\pranav-os\server\app\scheduler.py", line 124, in evening_close_job
+    text = await planner.evening_close()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\app\services\planner.py", line 250, in evening_close
+    parts.append(await draft_day(tomorrow))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\app\services\planner.py", line 77, in draft_day
+    commitments = await db.fetch(
+                  ^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\app\db.py", line 22, in fetch
+    return await pool().fetch(query, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\pool.py", line 570, in fetch
+    return await con.fetch(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\connection.py", line 691, in fetch
+    return await self._execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\connection.py", line 1794, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\connection.py", line 1892, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\connection.py", line 1925, in _do_execute
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Dell\Desktop\pranav-os\server\.venv\Lib\site-packages\asyncpg\connection.py", line 433, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg\protocol\protocol.pyx", line 166, in prepare
+asyncpg.exceptions.UndefinedFunctionError: operator does not exist: date <= integer
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+tick_blocks OK
+brief OK
+close RAISED:

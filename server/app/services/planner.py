@@ -75,7 +75,7 @@ async def draft_day(date: dt.date) -> str:
         "SELECT title, start_at, end_at FROM blocks WHERE day_id=$1 AND is_fixed=TRUE", day_id)
     floors = await floor_status()
     commitments = await db.fetch(
-        "SELECT title, due_date FROM commitments WHERE status='open' AND (due_date IS NULL OR due_date <= $1 + 14)",
+        "SELECT title, due_date FROM commitments WHERE status='open' AND (due_date IS NULL OR due_date <= $1::date + 14)",
         date)
     closeouts = await db.fetch(
         """SELECT b.title, c.next_step FROM closeouts c JOIN blocks b ON b.id=c.block_id
