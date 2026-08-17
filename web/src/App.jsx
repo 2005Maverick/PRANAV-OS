@@ -13,6 +13,8 @@ const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
 
 // ?demo — a fully-lived-in day so the design can be judged before real data exists
 const DEMO = typeof window !== 'undefined' && window.location.search.includes('demo')
+// ?empty — force the empty-day teaching state (design review)
+const EMPTY = typeof window !== 'undefined' && window.location.search.includes('empty')
 
 // every API call carries the cockpit key (single-user auth)
 if (typeof window !== 'undefined' && !window.__keyedFetch) {
@@ -26,46 +28,12 @@ if (typeof window !== 'undefined' && !window.__keyedFetch) {
   }
 }
 
-function KeyGate({ onSet }) {
-  const [val, setVal] = useState('')
-  return (
-    <div className="loading" style={{ flexDirection: 'column', gap: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div>PRANAV OS · COCKPIT KEY</div>
-      <form onSubmit={(e) => { e.preventDefault(); if (val.trim()) { localStorage.setItem('pranav_key', val.trim()); onSet() } }}
-        style={{ display: 'flex', gap: 8 }}>
-        <input className="lib-search" type="password" autoFocus value={val}
-          onChange={(e) => setVal(e.target.value)} placeholder="paste the key" />
-        <button className="rv-btn dark-btn" type="submit">enter</button>
-      </form>
-    </div>
-  )
-}
-
-const HOUR_PX = 52
-
 function mins(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
   return h * 60 + m
 }
 
-function Plane({ b, top, height }) {
-  const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 40 ? 'slim' : ''].join(' ')
-  return (
-    <div className={cls} style={{ top, height, '--c': b.color }}>
-      <div className="row">
-        <span className="tw">
-          {b.domain && <span className="dom">{b.domain}</span>}
-          <span className="t">{b.title}</span>
-        </span>
-        <span className="time">{b.start}–{b.end}</span>
-      </div>
-      {b.next_action && height >= 64 && <div className="na">→ {b.next_action}</div>}
-    </div>
-  )
-}
-
-// Elastic time: blocks get a readable minimum height; gaps compress to pay
-// for it. A binary search finds the scale where everything exactly fits.
+/* ---------- elastic time: rooms keep readable height, gaps compress ---------- */
 function elasticLayout(blocks, nowM, availH) {
   const sorted = [...blocks].sort((a, b) => mins(a.start) - mins(b.start))
   const first = Math.min(...sorted.map((b) => mins(b.start)), nowM)
@@ -83,18 +51,17 @@ function elasticLayout(blocks, nowM, availH) {
   }
   if (cur < d1) segs.push({ kind: 'gap', s: cur, d: d1 - cur })
 
-  const GAP_PAD = 6 // vertical breathing between cards
+  const GAP_PAD = 8
   const hFor = (g, sc) => g.kind === 'block'
-    ? Math.max(g.d * sc, 44)
-    : Math.min(Math.max(g.d * sc, g.d >= 10 ? 14 : 2), 64)
+    ? Math.max(g.d * sc, 52)
+    : Math.min(Math.max(g.d * sc, g.d >= 10 ? 20 : 4), 72)
   let lo = 0.05, hi = 6
   for (let i = 0; i < 26; i++) {
     const mid = (lo + hi) / 2
     const t = segs.reduce((a, g) => a + hFor(g, mid), 0) + GAP_PAD * segs.filter((g) => g.kind === 'block').length
     if (t > availH) hi = mid; else lo = mid
   }
-  // comfort floor: never cram below ~1px/min — overflow scrolls instead
-  const scale = Math.max(lo, 1.0)
+  const scale = Math.max(lo, 1.0) // comfort floor; overflow scrolls
   let y = 0
   for (const g of segs) {
     g.y = y
@@ -113,7 +80,27 @@ function elasticLayout(blocks, nowM, availH) {
   return { segs, yOf, total: y, d0, d1 }
 }
 
-function Timeline({ today }) {
+const fmtGap = (m) => `${m >= 60 ? Math.floor(m / 60) + 'H ' : ''}${m % 60 ? (m % 60) + 'M' : ''}`.trim()
+
+function Room({ b, top, height }) {
+  const cls = ['room', b.status, b.fixed ? 'fixed' : '', height < 44 ? 'slim' : ''].join(' ')
+  const revised = b.status === 'sacrificed' || b.status === 'skipped'
+  return (
+    <div className={cls} style={{ top, height, '--c': b.color }}>
+      <div className="r-row">
+        <span className="r-title">
+          {b.domain && <span className="r-dom">{b.domain}</span>}
+          {b.title}
+        </span>
+        <span className="r-time">{b.start}–{b.end}</span>
+      </div>
+      {b.next_action && height >= 72 && <div className="r-next">→ {b.next_action}</div>}
+      {revised && <span className="rev-tag">Δ {b.status}</span>}
+    </div>
+  )
+}
+
+function Section({ today }) {
   const wrapRef = useRef(null)
   const [wrapH, setWrapH] = useState(0)
 
@@ -127,62 +114,56 @@ function Timeline({ today }) {
     return () => ro.disconnect()
   }, [today.blocks.length])
 
-  if (!today.blocks.length)
-    return (
-      <div className="empty-day">
-        <div className="voice">No plan yet for today.</div>
-        <div className="hint">tell the bot: /plan — or wait for tonight's draft</div>
-      </div>
-    )
   const nowM = mins(today.now)
-  const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 46, 300))
-
-  // when the day overflows, open scrolled so NOW sits at ~38% of the view
+  const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 56, 300))
   const nowY = yOf(nowM)
+
   useEffect(() => {
-    const scroller = wrapRef.current?.parentElement
+    const scroller = wrapRef.current
     if (!scroller) return
     if (scroller.scrollHeight > scroller.clientHeight + 8) {
       scroller.scrollTop = Math.max(nowY - scroller.clientHeight * 0.38, 0)
     }
   }, [Math.round(nowY), total])
 
-  // hour labels via the elastic map; skip any that would crowd (<16px apart)
   const marks = []
   let lastY = -99
   for (let h = Math.ceil(d0 / 60); h <= d1 / 60; h++) {
     const y = yOf(h * 60)
-    if (y - lastY >= 16) { marks.push({ h, y }); lastY = y }
+    if (y - lastY >= 20) { marks.push({ h, y }); lastY = y }
   }
-  const fmtGap = (m) => `${m >= 60 ? Math.floor(m / 60) + 'h ' : ''}${m % 60 ? (m % 60) + 'm' : ''}`.trim()
+
   return (
-    <div className="timeline" ref={wrapRef}>
-      <div className="tl-grid" style={{ height: total }}>
+    <div className="section-pane" ref={wrapRef}>
+      <div className="section-grid" style={{ height: total }}>
         {marks.map(({ h, y }) => (
-          <div key={h} className={`tl-hour ${h % 3 === 0 ? 'major' : ''}`} style={{ top: y }}>
-            <span className="h">{String(h).padStart(2, '0')}:00</span>
-            {h % 3 === 0 && <span className="rule" />}
+          <div key={h} className="hourmark" style={{ top: y }}>
+            <span className="hm-t">{String(h).padStart(2, '0')}:00</span>
+            {h % 3 === 0 && <span className="hm-rule" />}
           </div>
         ))}
         {segs.filter((g) => g.kind === 'gap' && g.d >= 10).map((g) => (
-          <div key={`g${g.s}`} className="gap-divider" style={{ top: g.y + g.h / 2 }}>
-            <span className="gd-line short" />
-            <span className="gd-text">{fmtGap(g.d)} free</span>
-            <span className="gd-line" />
+          <div key={`g${g.s}`} className="dim" style={{ top: g.y + g.h / 2 }}>
+            <span className="d-tick" />
+            <span className="d-line" />
+            <span className="d-label">{fmtGap(g.d)} FREE</span>
+            <span className="d-line" />
+            <span className="d-tick" />
           </div>
         ))}
         {segs.filter((g) => g.kind === 'block').map((g) => (
-          <Plane key={g.b.id} b={g.b} top={g.y} height={g.h} />
+          <Room key={g.b.id} b={g.b} top={g.y} height={g.h} />
         ))}
-        <div className="nowline" style={{ top: nowY }}>
-          <span className="tag">NOW {today.now}</span>
+        <div className="redline" style={{ top: nowY }}>
+          <span className="rl-tag">{today.now}</span>
         </div>
       </div>
     </div>
   )
 }
 
-function RailCapture() {
+/* ---------- schedule of works (rail) ---------- */
+function SiteNote() {
   const [val, setVal] = useState('')
   const [flash, setFlash] = useState(null)
   const inputRef = useRef(null)
@@ -205,7 +186,7 @@ function RailCapture() {
     if (!text) return
     setVal('')
     if (DEMO) {
-      setFlash('Saved → Notes (demo).')
+      setFlash('Filed to Notes (demo).')
     } else {
       try {
         const r = await fetch(`${API}/api/capture`, {
@@ -216,7 +197,7 @@ function RailCapture() {
         const d = await r.json()
         setFlash(d.reply)
       } catch {
-        setFlash('Save failed — is the server up?')
+        setFlash('Could not reach the server — note not saved.')
       }
     }
     inputRef.current?.blur()
@@ -224,27 +205,25 @@ function RailCapture() {
   }
 
   return (
-    <form className="rail-capture" onSubmit={submit}>
-      <div className="rc-box">
-        <input
-          ref={inputRef}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          placeholder="save a thought, a link, anything…"
-        />
-        <button type="submit" className="rc-send" aria-label="save">➤</button>
+    <form className="site-note" onSubmit={submit}>
+      <div className="sn-row">
+        <input ref={inputRef} className="field" aria-label="Site note — capture anything"
+          value={val} onChange={(e) => setVal(e.target.value)}
+          placeholder="note anything — it files itself" />
+        <button type="submit" className="btn" aria-label="file the note">file</button>
       </div>
-      <span className="rc-hint mono">{flash || 'press C anywhere to write here'}</span>
+      <span className={`sn-hint ${flash ? 'sn-flash' : ''}`}>
+        {flash || 'PRESS C TO WRITE FROM ANYWHERE'}
+      </span>
     </form>
   )
 }
 
-function Rail({ rail, today }) {
+function Works({ rail, today }) {
   const current = today.blocks.find((b) => b.status === 'started')
   const nowM = mins(today.now)
-  const upcoming = today.blocks
-    .filter((b) => b.status === 'planned' && mins(b.start) > nowM)
-    .slice(0, 2)
+  const upcoming = today.blocks.filter((b) => b.status === 'planned' && mins(b.start) > nowM)
+  const next = upcoming[0]
   const behind = rail.floors.filter((f) => !f.ok).length
   const minsLeft = current ? Math.max(mins(current.end) - nowM, 0) : null
   const pct = current
@@ -252,70 +231,76 @@ function Rail({ rail, today }) {
     : 0
 
   return (
-    <aside className="rail">
+    <aside className="works" aria-label="Schedule of works">
+      <div className="works-h"><span className="cap" style={{ color: 'var(--text-faint)' }}>Schedule of works</span></div>
+
       {current ? (
-        <div className="now-card" style={{ '--c': current.color }}>
-          <div className="nc-eyebrow mono">Now{current.domain ? ` · ${current.domain}` : ''}</div>
-          <div className="nc-title">{current.title}</div>
-          <div className="nc-count mono">{minsLeft}<span className="nc-unit">min left</span></div>
-          {current.next_action && <div className="nc-action">→ {current.next_action}</div>}
-          {current.playlist_url && (
-            <a className="nc-playlist mono" href={current.playlist_url} target="_blank" rel="noreferrer">▶ playlist</a>
-          )}
-          <div className="nc-progress">
-            <span className="nc-pct mono">{pct}%</span>
-            <div className="nc-bar"><span style={{ width: `${pct}%` }} /></div>
+        <div className="current-work" style={{ '--c': current.color }}>
+          <div className="cw-dom">Now{current.domain ? ` · ${current.domain}` : ''}</div>
+          <div className="cw-title">{current.title}</div>
+          <div className="cw-count">{minsLeft}<span className="u">MIN LEFT</span></div>
+          {current.next_action && <div className="cw-next">→ {current.next_action}</div>}
+          <div className="cw-bar">
+            <span className="anno">{pct}%</span>
+            <span className="cw-track"><span style={{ width: `${pct}%` }} /></span>
           </div>
+          {current.playlist_url && (
+            <a className="cw-playlist" href={current.playlist_url} target="_blank" rel="noreferrer">▶ playlist</a>
+          )}
         </div>
       ) : (
-        <div className="now-card idle">
-          <div className="nc-eyebrow mono">Now</div>
-          <div className="nc-title dim-t">Between blocks</div>
-          {today.energy_note && <div className="nc-action">{today.energy_note}</div>}
+        <div className="current-work">
+          <div className="cw-dom">Now</div>
+          <div className="cw-title" style={{ color: 'var(--text-muted)', fontWeight: 400 }}>Between works</div>
+          {today.energy_note && <div className="cw-next">{today.energy_note}</div>}
         </div>
       )}
 
-      {upcoming.length > 0 && (
-        <div className="next-card" style={{ '--c': upcoming[0].color }}>
-          <div className="nc-eyebrow mono">Next · {upcoming[0].start}</div>
-          <div className="nx-title">{upcoming[0].title}</div>
-          {upcoming[1] && (
-            <div className="nx-after mono">{upcoming[1].start}  {upcoming[1].title}</div>
-          )}
+      <div className="works-sec">
+        <div className="works-row">
+          <span className="wr-main">
+            {next ? next.title : 'Nothing else scheduled today'}
+            {next && <span className="wr-sub"> · next</span>}
+          </span>
+          {next && <span className="anno">{next.start}</span>}
         </div>
-      )}
-
-      <div className="inst">
-        <div className="label">Sleep</div>
-        {rail.sleep && rail.sleep.debt != null ? (
-          <>
-            <div className="big">{rail.sleep.debt > 0 ? '+' : '−'}{Math.abs(rail.sleep.debt).toFixed(1)}<span className="u">h</span></div>
-            <div className="small">
-              {rail.sleep.debt < 0 ? 'short this week' : 'ahead this week'}
-              {rail.sleep.hours ? ` · last night ${rail.sleep.hours.toFixed(1)}h` : ''}
-              {rail.sleep.close ? ` · sleep by ${rail.sleep.close}` : ''}
-            </div>
-          </>
-        ) : (
-          <div className="small">no data yet — tell the bot "sleeping" tonight</div>
+        {upcoming[1] && (
+          <div className="works-row">
+            <span className="wr-main wr-sub">{upcoming[1].title}</span>
+            <span className="anno">{upcoming[1].start}</span>
+          </div>
         )}
       </div>
 
-      <div className="inst">
-        <div className="label">
-          <span>This week</span>
-          {behind > 0 && <span className="label-note">{behind} behind</span>}
+      <div className="works-sec">
+        <div className="works-row">
+          <span className="wr-main">Sleep</span>
+          {rail.sleep && rail.sleep.debt != null ? (
+            <span className="anno">
+              {rail.sleep.debt > 0 ? '+' : '−'}{Math.abs(rail.sleep.debt).toFixed(1)}h
+              {rail.sleep.close ? ` · bed by ${rail.sleep.close}` : ''}
+            </span>
+          ) : (
+            <span className="anno">say “sleeping” tonight</span>
+          )}
         </div>
-        <div className="floors">
+      </div>
+
+      <div className="works-sec">
+        <div className="cap">
+          <span>This week</span>
+          {behind > 0 && <span className="flag">{behind} behind</span>}
+        </div>
+        <div style={{ marginTop: 'var(--s-3)' }}>
           {rail.floors.map((f) => (
-            <div key={f.slug} className={`frow ${f.ok ? 'ok' : 'risk'}`}>
-              <div className="frow-line">
-                <span className="name">{f.name}</span>
-                <span className="score mono">{f.done}/{f.target}</span>
+            <div key={f.slug} className={`min-row ${f.ok ? 'ok' : ''}`}>
+              <div className="min-line">
+                <span className="min-name">{f.name}</span>
+                <span className="min-score">{f.done}/{f.target}</span>
               </div>
-              <div className="bar">
+              <div className="min-ticks">
                 {Array.from({ length: f.target }, (_, i) => (
-                  <span key={i} className={`seg ${i < f.done ? 'f' : ''}`} />
+                  <span key={i} className={i < f.done ? 'f' : ''} />
                 ))}
               </div>
             </div>
@@ -323,80 +308,213 @@ function Rail({ rail, today }) {
         </div>
       </div>
 
-      <div className="proto-chip mono">
-        {rail.protocol
-          ? (rail.protocol.completed ? 'morning routine ✓' : `morning routine ${rail.protocol.steps_done}/${rail.protocol.steps_total}`)
-          : 'morning routine — not set up yet'}
+      <div className="works-sec">
+        <div className="works-row">
+          <span className="wr-main wr-sub">Morning routine</span>
+          <span className="anno">
+            {rail.protocol
+              ? (rail.protocol.completed ? 'done ✓' : `${rail.protocol.steps_done}/${rail.protocol.steps_total}`)
+              : 'not set up'}
+          </span>
+        </div>
       </div>
 
-      <RailCapture />
+      <SiteNote />
     </aside>
   )
 }
 
-const VIEWS = ['today', 'week', 'wall', 'review']
-const MORE_VIEWS = ['library', 'arcs', 'sleep', 'talk', 'lists', 'finance', 'vault', 'rules']
+/* ---------- title block ---------- */
+const SHEETS = [
+  ['today', '01', 'Today'], ['week', '02', 'Week'], ['wall', '03', 'The Wall'], ['review', '04', 'Review'],
+]
+const INDEX = [
+  ['library', '05', 'Library'], ['arcs', '06', 'Arcs'], ['sleep', '07', 'Sleep'], ['talk', '08', 'Talk'],
+  ['lists', '09', 'Lists'], ['finance', '10', 'Money'], ['vault', '11', 'Vault'], ['rules', '12', 'Rules'],
+]
 
+function TitleBlock({ view, setView, today, onArm, arming }) {
+  const sheet = [...SHEETS, ...INDEX].find(([v]) => v === view) || SHEETS[0]
+  const dateStr = new Date(today.date + 'T00:00:00').toLocaleDateString('en-GB', {
+    weekday: 'short', day: '2-digit', month: 'short',
+  })
+  return (
+    <header className="titleblock">
+      <div className="tb-cell tb-sheetno" aria-hidden="true">
+        <span className="tb-label">Sheet</span>
+        <span className="tb-value">{sheet[1]}</span>
+      </div>
+      <div className="tb-cell tb-project">
+        <span className="tb-label">Project</span>
+        <span className="tb-value">Pranav OS · {sheet[2]}</span>
+      </div>
+      <div className="tb-cell">
+        <span className="tb-label">Date</span>
+        <span className="tb-value quiet">{dateStr}</span>
+      </div>
+      <div className="tb-cell tb-status">
+        <span className="tb-label">Status</span>
+        <span className="tb-value quiet">
+          <span className={`status-dot ${today.status || 'draft'}`} aria-hidden="true" />
+          {today.status || 'no plan'}
+        </span>
+      </div>
+      {today.status === 'draft' && (
+        <div className="tb-cell tb-action">
+          <button className="btn btn-primary" onClick={onArm} disabled={arming}>
+            {arming ? 'Arming…' : 'Arm the day'}
+          </button>
+        </div>
+      )}
+      <nav className="tb-cell tb-nav" style={{ marginLeft: today.status === 'draft' ? 0 : 'auto' }}
+        aria-label="Sheets">
+        {SHEETS.map(([v, no, name]) => (
+          <button key={v} className={`tb-tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
+            {no} {name}
+          </button>
+        ))}
+        <select className="tb-tab more" aria-label="Sheet index"
+          value={INDEX.some(([v]) => v === view) ? view : ''}
+          onChange={(e) => e.target.value && setView(e.target.value)}>
+          <option value="" disabled>Index ▾</option>
+          {INDEX.map(([v, no, name]) => <option key={v} value={v}>{no} {name}</option>)}
+        </select>
+      </nav>
+    </header>
+  )
+}
+
+/* ---------- states ---------- */
+function KeyGate({ onSet }) {
+  const [val, setVal] = useState('')
+  return (
+    <div className="stamp-gate">
+      <div className="stamp">
+        <span className="cap st-title">Pranav OS · Drawing Set</span>
+        <span className="st-sub">Enter the cockpit key to open the sheets.</span>
+        <form onSubmit={(e) => { e.preventDefault(); if (val.trim()) { localStorage.setItem('pranav_key', val.trim()); onSet() } }}>
+          <input className="field" type="password" autoFocus value={val} aria-label="Cockpit key"
+            onChange={(e) => setVal(e.target.value)} placeholder="cockpit key" />
+          <button className="btn btn-primary" type="submit">Open</button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function LoadingSheet() {
+  return (
+    <div className="sheet-loading" aria-label="Loading today's drawing">
+      <div className="skel" style={{ height: 64 }} />
+      <div className="skel" style={{ height: 96, width: '70%' }} />
+      <div className="skel" style={{ height: 48, width: '85%' }} />
+      <div className="skel" style={{ height: 96, width: '75%' }} />
+      <div className="skel" style={{ height: 48, width: '60%' }} />
+    </div>
+  )
+}
+
+function EmptyDay() {
+  return (
+    <div className="sheet-empty">
+      <span className="cap se-title">No drawing issued for today</span>
+      <p className="se-body">
+        The plan is drafted every evening, or on demand. Tell the bot
+        <strong> /plan</strong> and today's sheet appears here.
+      </p>
+      <a className="btn btn-primary" href="https://t.me/Pranav_os_bot" target="_blank" rel="noreferrer">
+        Open the bot
+      </a>
+    </div>
+  )
+}
+
+function FetchError({ onRetry }) {
+  return (
+    <div className="banner-error" role="alert">
+      <span className="mark" aria-hidden="true">!</span>
+      <p><strong>Couldn't reach the server.</strong> The drawing set is safe — this is a
+        connection problem. Check your network or the cockpit key, then try again.</p>
+      <button className="btn" onClick={onRetry}>Retry</button>
+      <button className="btn" onClick={() => { localStorage.removeItem('pranav_key'); window.location.reload() }}>
+        Re-enter key
+      </button>
+    </div>
+  )
+}
+
+/* ---------- app ---------- */
 export default function App() {
   const [view, setView] = useState('today')
   const [today, setToday] = useState(null)
   const [rail, setRail] = useState(null)
   const [week, setWeek] = useState(null)
   const [wall, setWall] = useState(null)
+  const [failed, setFailed] = useState(false)
+  const [arming, setArming] = useState(false)
   const [hasKey, setHasKey] = useState(
     DEMO || (typeof window !== 'undefined' && !!localStorage.getItem('pranav_key')))
 
-  useEffect(() => {
+  const load = () => {
     if (DEMO) {
-      setToday(MOCK_TODAY)
+      setToday(EMPTY ? { ...MOCK_TODAY, blocks: [], status: null } : MOCK_TODAY)
       setRail(MOCK_RAIL)
       setWeek(mkWeek())
       setWall(mkWall())
       return
     }
-    const load = () => {
-      fetch(`${API}/api/today`).then((r) => r.json()).then(setToday).catch(() => {})
-      fetch(`${API}/api/rail`).then((r) => r.json()).then(setRail).catch(() => {})
-      fetch(`${API}/api/week`).then((r) => r.json()).then((d) => setWeek(d.days)).catch(() => {})
-      fetch(`${API}/api/wall`).then((r) => r.json()).then((d) => setWall(d.tiles)).catch(() => {})
-    }
+    setFailed(false)
+    Promise.all([
+      fetch(`${API}/api/today`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json() }),
+      fetch(`${API}/api/rail`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json() }),
+    ]).then(([t, ra]) => { setToday(t); setRail(ra) })
+      .catch(() => setFailed(true))
+    fetch(`${API}/api/week`).then((r) => r.json()).then((d) => setWeek(d.days)).catch(() => {})
+    fetch(`${API}/api/wall`).then((r) => r.json()).then((d) => setWall(d.tiles)).catch(() => {})
+  }
+
+  useEffect(() => {
+    if (!hasKey) return
     load()
     const id = setInterval(load, 60_000)
     return () => clearInterval(id)
   }, [hasKey])
 
-  if (!hasKey) return <KeyGate onSet={() => setHasKey(true)} />
-  if (!today || !rail) return <div className="loading">Pranav OS · connecting</div>
-
-  const titles = {
-    today: 'Today', week: 'Week', wall: 'The Wall', review: 'Review',
-    lists: 'Lists', finance: 'Money', library: 'Library',
-    arcs: 'Arcs', sleep: 'Sleep & Energy', vault: 'Vault',
-    talk: 'Talk', rules: 'Rules',
+  const arm = async () => {
+    if (DEMO) return
+    setArming(true)
+    try {
+      await fetch(`${API}/api/day/confirm`, { method: 'POST' })
+      await load()
+    } finally { setArming(false) }
   }
+
+  if (!hasKey) return <KeyGate onSet={() => setHasKey(true)} />
+  if (failed && !today) {
+    return (
+      <div className="drawing">
+        <FetchError onRetry={load} />
+      </div>
+    )
+  }
+  if (!today || !rail) {
+    return (
+      <div className="drawing">
+        <LoadingSheet />
+      </div>
+    )
+  }
+
+  const isToday = view === 'today'
   return (
-    <div className={`cockpit ${view === 'today' ? '' : 'full'}`}>
-      <header className="head">
-        <div className="brand">
-          <h1>{titles[view]}</h1>
-          <nav className="tabs">
-            {VIEWS.map((v) => (
-              <button key={v} className={`tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
-                {v}
-              </button>
-            ))}
-            <select className="tab more" value={MORE_VIEWS.includes(view) ? view : ''}
-              onChange={(e) => e.target.value && setView(e.target.value)}>
-              <option value="" disabled>more ▾</option>
-              {MORE_VIEWS.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </nav>
-        </div>
-      </header>
-      <main>
-        {view === 'today' && <Timeline today={today} />}
-        {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} demo={DEMO} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
-        {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
+    <div className="drawing">
+      <TitleBlock view={view} setView={setView} today={today} onArm={arm} arming={arming} />
+      {failed && <FetchError onRetry={load} />}
+      <div className={`sheet-body ${isToday ? '' : 'full'}`}>
+        {isToday && (today.blocks.length ? <Section today={today} /> : <EmptyDay />)}
+        {isToday && <Works rail={rail} today={today} />}
+        {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} demo={DEMO} /> : <div className="sheet-empty"><span className="cap se-title">No week data yet</span></div>)}
+        {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="sheet-empty"><span className="cap se-title">The wall begins when your first day closes</span></div>)}
         {view === 'review' && <Review demo={DEMO} />}
         {view === 'lists' && <Lists demo={DEMO} />}
         {view === 'finance' && <Finance demo={DEMO} />}
@@ -406,8 +524,7 @@ export default function App() {
         {view === 'vault' && <Vault demo={DEMO} />}
         {view === 'talk' && <Talk demo={DEMO} />}
         {view === 'rules' && <Rules demo={DEMO} />}
-      </main>
-      {view === 'today' && <Rail rail={rail} today={today} />}
+      </div>
     </div>
   )
 }

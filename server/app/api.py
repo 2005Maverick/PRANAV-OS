@@ -95,6 +95,17 @@ async def review_complete(body: CompleteIn):
     return {"ok": True}
 
 
+@router.post("/day/confirm")
+async def day_confirm():
+    date = _now().date()
+    await db.execute(
+        "UPDATE days SET status='confirmed', confirmed_at=now() WHERE date=$1 AND status='draft'", date)
+    from .services import sleep as _slp
+    await _slp.on_wake()
+    day = await db.fetchrow("SELECT status FROM days WHERE date=$1", date)
+    return {"ok": True, "status": day["status"] if day else None}
+
+
 @router.post("/plan/tomorrow")
 async def plan_tomorrow():
     date = _now().date() + dt.timedelta(days=1)
