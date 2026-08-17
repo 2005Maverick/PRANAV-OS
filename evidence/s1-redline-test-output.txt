@@ -1,0 +1,26 @@
+SHEET 01 · TODAY — REDLINE verification (2026-08-18, browser-computed)
+
+RENDER (demo): titleblock 5 cells; 10 material rooms; dimension labels
+[50M FREE, 45M FREE, 30M FREE, 1H 30M FREE]; redline tag present; 4 works
+sections; revision tag "Δ sacrificed" on changed block; fonts loaded:
+Archivo Variable + IBM Plex Mono; body bg oklch(0.17 0.03 252).
+
+CONTRAST (canvas-converted sRGB, WCAG):
+tb-label 4.58+ · tb-value 14.72 · quiet 6.26 · hourmark 4.85 · dim-label 6.62
+room-title 11.79 · room-time 4.77 · room-dom 6.83 · cw-count 5.76 · cw-next 4.89
+min-score(warn) 8.95 · works-anno 6.26 · redline-tag 4.81 · primary-btn 4.81
+accent-text-on-bg 7.8 · faint after fix 4.58/4.85 · border-strong 3.32/3.14
+focus ring (accent) 4.81/4.54, renders 2.4px on focus.
+
+TYPE CENSUS after tightening: 13 (anno) / 14 (ui) / 16 (body+titles) /
+19 (sheetno+empty title) / 28 (countdown) — 4 UI sizes + anno.
+
+STATES: loading skeleton (5 bars, no shift); empty (?empty): "No drawing
+issued for today" + teaching + real CTA "Open the bot"; fetch-error (bad key,
+real mode): banner "Couldn't reach the server. The drawing set is safe…" with
+Retry + Re-enter key; key gate = issue stamp; status dot draft/confirmed/closed;
+Arm-the-day primary appears only when status=draft (endpoint /api/day/confirm added).
+
+KEYBOARD: 7 focusables on empty view, focus-visible ring 2px accent offset 2.
+prefers-reduced-motion: global kill switch present.
+Build: vite production build clean.
