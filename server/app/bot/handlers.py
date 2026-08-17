@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, onboarding, planner, protocols, review, sleep
+from ..services import capture, lists_fin, onboarding, planner, protocols, review, sleep
 
 log = logging.getLogger("bot")
 
@@ -182,6 +182,12 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             """INSERT INTO sleep_logs (date, slept_at) VALUES ($1,$2)
                ON CONFLICT (date) DO UPDATE SET slept_at=EXCLUDED.slept_at""", date, now)
         reply = "Logged. Goodnight — I'll shape the morning around it."
+    elif (fin := await lists_fin.try_finance(text)):
+        reply = fin
+    elif (lst := await lists_fin.try_lists(text)):
+        reply = lst
+    elif (rem := await lists_fin.try_reminder(text)):
+        reply = rem
     elif CAPTURE_HINT.match(text) or ("http://" in low or "https://" in low):
         reply = await capture.capture_text(text)
     elif await db.fetchval(

@@ -91,6 +91,64 @@ async def plan_tomorrow():
     return {"reply": text}
 
 
+@router.get("/lists")
+async def lists_get():
+    rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")
+    out = []
+    for r in rows:
+        items = await db.fetch(
+            "SELECT id, text, checked FROM list_items WHERE list_id=$1 ORDER BY sort, id", r["id"])
+        out.append({**dict(r), "items": [dict(i) for i in items]})
+    return {"lists": out}
+
+
+class ListItemIn(BaseModel):
+    id: int
+    checked: bool
+
+
+@router.post("/lists/check")
+async def lists_check(body: ListItemIn):
+    await db.execute("UPDATE list_items SET checked=$2 WHERE id=$1", body.id, body.checked)
+    return {"ok": True}
+
+
+class ListFireIn(BaseModel):
+    id: int
+    fire_kind: str
+    fire_param: str | None = None
+
+
+@router.post("/lists/fire-rule")
+async def lists_fire_rule(body: ListFireIn):
+    await db.execute(
+        "UPDATE lists SET fire_kind=$2, fire_param=$3 WHERE id=$1",
+        body.id, body.fire_kind, body.fire_param)
+    return {"ok": True}
+
+
+@router.get("/finance")
+async def finance_get():
+    entries = await db.fetch(
+        "SELECT id, amount, category, note, spent_on::text FROM finance_entries ORDER BY id DESC LIMIT 60")
+    months = await db.fetch(
+        """SELECT to_char(date_trunc('month', spent_on), 'YYYY-MM') AS month,
+                  category, SUM(amount) AS total
+           FROM finance_entries WHERE spent_on > CURRENT_DATE - 180
+           GROUP BY 1, 2 ORDER BY 1 DESC, total DESC""")
+    subs = await db.fetch(
+        "SELECT id, name, amount, period, renews_on::text, active FROM subscriptions WHERE active ORDER BY id")
+    deadlines = await db.fetch(
+        """SELECT id, title, due_date::text FROM commitments
+           WHERE status='open' AND due_date IS NOT NULL ORDER BY due_date LIMIT 20""")
+    return {
+        "entries": [dict(r) for r in entries],
+        "months": [dict(r) for r in months],
+        "subscriptions": [dict(r) for r in subs],
+        "deadlines": [dict(r) for r in deadlines],
+    }
+
+
 class CaptureIn(BaseModel):
     text: str
 

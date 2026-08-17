@@ -9,7 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram.ext import Application
 
 from . import config, db
-from .services import planner, protocols
+from .services import lists_fin, planner, protocols
 
 log = logging.getLogger("scheduler")
 
@@ -75,6 +75,8 @@ async def tick_blocks(app: Application):
     await protocols.maybe_escalate(send_k)
     await protocols.maybe_reward_checkin(send_k)
     await protocols.maybe_checkin(send_k)
+    await lists_fin.fire_lists(send_k)
+    await lists_fin.fire_deadlines(send_k)
 
 
 async def morning_brief_tick(app: Application):

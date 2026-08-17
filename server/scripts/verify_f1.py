@@ -14,7 +14,7 @@ async def main():
         "INSERT INTO days (date) VALUES (CURRENT_DATE - 2) "
         "ON CONFLICT (date) DO UPDATE SET status=days.status RETURNING id")
     dom = await db.fetchval("SELECT id FROM domains WHERE slug='tech'")
-    for i in (18, 19):
+    for i in ("08", "09"):  # same IST band (afternoon) — 18/19 UTC straddled bands
         await db.execute(
             """INSERT INTO blocks (day_id, domain_id, title, start_at, end_at, status)
                VALUES ($1,$2,'TEST tech read',

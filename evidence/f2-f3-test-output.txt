@@ -1,0 +1,10 @@
+finance: ₹450 → food. This month: ₹450.
+db row: {'amount': Decimal('450.00'), 'category': 'food'}
+sub: Subscription tracked: TESTSUB ₹649/monthly.
+newlist: List “testpack” created. Add with: add <thing> to testpack list. Set when it fires from the cockpit Lists page.
+add: Added to “testpack” — 1 item on it.
+show: “testpack”: | ☐ TESTITEM charger
+reminder: Locked: “TESTDEADLINE thing” — 24 Aug (7d). I'll nudge at 28/7/2 days out and on the day.
+deadline fires (want 1): 1 [('deadline', 'Deadline in 7 days: TESTDL fire (24 Aug). [deadline 2 d7]')]
+list fires (want 1): 1 [('list_fire', "“testpack” — it's the day:\n☐ TESTITEM charger\n[list 1 2026-08-17]")]
+cleanup done

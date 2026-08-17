@@ -415,6 +415,52 @@ body {
 }
 .tab:hover { color: var(--dim); }
 .tab.on { color: var(--bone); border-color: var(--line); background: var(--ink-lift); }
+.tab.more { appearance: none; -webkit-appearance: none; }
+.tab.more option { background: var(--ink-lift); color: var(--bone); text-transform: none; }
+
+/* ---------- generic sub-pages (Lists, Finance, etc.) ---------- */
+.page-wrap { max-width: 760px; padding: 26px 40px 60px; width: 100%; }
+.page-voice {
+  font-family: var(--font-voice); font-style: italic; font-size: 18px;
+  color: var(--dim); margin-bottom: 22px;
+}
+.lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.lst-card {
+  background: var(--ink-lift); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px 18px;
+}
+.lst-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.lst-name { font-size: 15px; font-weight: 500; text-transform: capitalize; }
+.lst-fire {
+  background: var(--ink); color: var(--faint); border: 1px solid var(--line);
+  border-radius: 5px; font-size: 10px; padding: 3px 6px;
+}
+.lst-item {
+  display: flex; align-items: center; gap: 10px; padding: 5px 0;
+  font-size: 13.5px; cursor: pointer;
+}
+.lst-item input { accent-color: var(--acid); }
+.lst-item.done span { color: var(--faint); text-decoration: line-through; }
+.lst-empty { font-size: 12px; color: var(--faint); font-style: italic; }
+
+.fin-top { display: flex; gap: 34px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 8px; }
+.fin-big { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; margin-top: 6px; }
+.fin-cats { display: flex; flex-direction: column; gap: 7px; padding-top: 4px; min-width: 220px; }
+.fin-cat { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.fin-cname { color: var(--dim); text-transform: capitalize; }
+.fin-cval { margin-left: auto; font-size: 12px; color: var(--bone); }
+.fin-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.fin-sec { margin-top: 26px; }
+.fin-sec .label {
+  font-family: var(--font-inst); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 10px;
+}
+.fin-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 0;
+  border-bottom: 1px solid var(--line-soft); font-size: 13.5px;
+}
+.fin-note { text-transform: capitalize; }
+.dim2 { color: var(--faint); font-size: 11px; }
 
 /* ---------- week ---------- */
 .week-floors {

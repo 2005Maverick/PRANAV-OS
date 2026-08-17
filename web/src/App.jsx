@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Week from './Week.jsx'
 import Wall from './Wall.jsx'
 import Review from './Review.jsx'
+import { Lists, Finance } from './ListsFinance.jsx'
 import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
@@ -300,6 +301,7 @@ function Rail({ rail, today }) {
 }
 
 const VIEWS = ['today', 'week', 'wall', 'review']
+const MORE_VIEWS = ['lists', 'finance']
 
 export default function App() {
   const [view, setView] = useState('today')
@@ -329,7 +331,10 @@ export default function App() {
 
   if (!today || !rail) return <div className="loading">Pranav OS · connecting</div>
 
-  const titles = { today: 'Today', week: 'Week', wall: 'The Wall', review: 'Review' }
+  const titles = {
+    today: 'Today', week: 'Week', wall: 'The Wall', review: 'Review',
+    lists: 'Lists', finance: 'Money',
+  }
   return (
     <div className={`cockpit ${view === 'today' ? '' : 'full'}`}>
       <header className="head">
@@ -341,6 +346,11 @@ export default function App() {
                 {v}
               </button>
             ))}
+            <select className="tab more" value={MORE_VIEWS.includes(view) ? view : ''}
+              onChange={(e) => e.target.value && setView(e.target.value)}>
+              <option value="" disabled>more ▾</option>
+              {MORE_VIEWS.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
           </nav>
         </div>
       </header>
@@ -349,6 +359,8 @@ export default function App() {
         {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
         {view === 'review' && <Review demo={DEMO} />}
+        {view === 'lists' && <Lists demo={DEMO} />}
+        {view === 'finance' && <Finance demo={DEMO} />}
       </main>
       {view === 'today' && <Rail rail={rail} today={today} />}
     </div>
