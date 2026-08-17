@@ -7,8 +7,9 @@
 /* ---------- 1 · palette (raw values live ONLY here) ---------- */
 :root {
   --_paper:     oklch(0.955 0.007 90);
-  --_sheet:     oklch(0.975 0.005 90);
-  --_paper-dim: oklch(0.925 0.008 90);
+  --_sheet:     oklch(0.985 0.004 90); /* reserved: text on red only */
+  --_wash:      oklch(0.925 0.010 92); /* poché — panel wash */
+  --_wash-deep: oklch(0.895 0.012 92);
   --_rule:      oklch(0.86 0.008 90);
   --_rule-faint:oklch(0.90 0.007 90);
   --_ink:       oklch(0.26 0.015 260);
@@ -23,11 +24,12 @@
 
   /* ---------- 2 · semantic tokens ---------- */
   --bg: var(--_paper);
-  --surface: var(--_sheet);
-  --surface-raised: var(--_paper-dim);
+  --surface: var(--_wash);
+  --surface-raised: var(--_wash-deep);
   --border: var(--_rule);
   --border-faint: var(--_rule-faint);
   --border-strong: oklch(0.62 0.012 260); /* interactive boundaries: >=3:1 */
+  --line-ink: oklch(0.72 0.012 260);       /* drawing outlines */
   --text: var(--_ink);
   --text-muted: var(--_ink-mut);
   --text-faint: var(--_ink-fnt);
@@ -169,8 +171,8 @@ button, input, select, textarea { font-family: inherit; }
 /* ---------- title block ---------- */
 .titleblock {
   display: flex; align-items: stretch;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  border-bottom: 2px solid var(--text);
+  background: var(--bg);
   flex-shrink: 0;
 }
 .tb-cell {
@@ -243,7 +245,7 @@ button, input, select, textarea { font-family: inherit; }
   position: absolute; left: 64px; right: var(--s-4);
   border-radius: var(--r-2); overflow: hidden;
   background: var(--surface);
-  border: 1px solid var(--border-faint);
+  border: 1px solid var(--line-ink);
   border-left: 3px solid var(--c);
   padding: var(--s-3) var(--s-4);
   display: flex; flex-direction: column; justify-content: flex-start;
@@ -323,8 +325,8 @@ button, input, select, textarea { font-family: inherit; }
 
 /* ---------- schedule of works (rail) ---------- */
 .works {
-  border-left: 1px solid var(--border);
-  background: var(--surface);
+  border-left: 1px solid var(--line-ink);
+  background: var(--bg);
   min-height: 0; overflow-y: auto; scrollbar-width: none;
   display: flex; flex-direction: column;
 }
@@ -339,8 +341,8 @@ button, input, select, textarea { font-family: inherit; }
 .current-work {
   margin: var(--s-4) var(--s-4) 0; padding: var(--s-4) var(--s-4) var(--s-4);
   border-radius: var(--r-3);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-faint);
+  background: var(--surface);
+  border: 1px solid var(--line-ink);
   border-left: 3px solid var(--c, var(--_m-graph));
 }
 .cw-dom {
