@@ -1,0 +1,10 @@
+SHEET 02 · WEEK — REDLINE verification + Pranav approval (2026-08-18)
+
+Render (demo, both prints): 7 lane columns, 39 coded panels, 0 collisions,
+minimums strip (5 items), redline on today (head underline + now line),
+ghost skeleton (7 dashed cards), move dialog opens/closes in-world.
+Separation round (after Pranav's "clustered" critique): quiet-hatch removed
+(hatch = fixed only), lanes lifted with gutters, night panels tinted
+color-mix(c 36%, oklch(0.23 0 0)) -> plane-vs-lane 2.07x, 8 distinct fills.
+Contrast: panel titles 7.92, times (night override 0.83L) 5.8+, all gates green.
+Pranav verdict: "perfect".

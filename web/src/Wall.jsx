@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const domainCode = (domain) => `var(--m-${domain || 'reward'}, var(--_p-graph))`
+
 const DAY_START = 6 * 60
 const DAY_END = 24 * 60
 
@@ -23,13 +25,13 @@ function Tile({ t, dim, onOpen }) {
           const h = Math.max(((mins(b.end) - mins(b.start)) / (DAY_END - DAY_START)) * 100, 3)
           return (
             <span key={b.id} className={`tbar ${b.status}`}
-              style={{ top: `${top}%`, height: `${h}%`, background: b.color }} />
+              style={{ top: `${top}%`, height: `${h}%`, background: domainCode(b.domain) }} />
           )
         })}
       </div>
       <div className="tile-foot">
-        <span className="mono">{t.label}</span>
-        {t.protocol && <span className="pdot" />}
+        <span className="anno">{t.label}</span>
+        {t.protocol && <span className="stamp-dot" title="morning routine done" />}
       </div>
     </div>
   )
@@ -38,23 +40,23 @@ function Tile({ t, dim, onOpen }) {
 function DayDetail({ t, onClose }) {
   const mark = { done: '✓', skipped: '✗', sacrificed: '→', started: '▶' }
   return (
-    <div className="day-detail" onClick={onClose}>
-      <div className="dd-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="dd-head">
-          <span className="dd-date">{t.date}</span>
-          <span className="mono dd-meta">
+    <div className="mv-overlay" onClick={onClose}>
+      <div className="mv-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="mv-head">
+          <span className="mv-title">{t.date}</span>
+          <span className="dd-meta">
             {t.blocks.filter((b) => b.status === 'done').length}/{t.blocks.length} done
-            {t.protocol ? ' · protocol ✓' : ''}
+            {t.protocol ? ' · routine done' : ''}
           </span>
-          <button className="dd-close" onClick={onClose}>×</button>
+          <button className="mv-close" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="dd-blocks">
           {t.blocks.map((b) => (
-            <div key={b.id} className={`dd-row ${b.status}`} style={{ '--c': b.color }}>
-              <span className="dd-mark mono">{mark[b.status] || '·'}</span>
-              <span className="dd-time mono">{b.start}–{b.end}</span>
+            <div key={b.id} className={`dd-row ${b.status}`} style={{ '--c': domainCode(b.domain) }}>
+              <span className="dd-mark">{mark[b.status] || '·'}</span>
+              <span className="dd-time">{b.start}–{b.end}</span>
               <span className="dd-title">{b.title}</span>
-              <span className="dd-status mono">{b.status}</span>
+              <span className="dd-status">{b.status}</span>
             </div>
           ))}
         </div>
@@ -70,11 +72,9 @@ export default function Wall({ tiles }) {
   const [domain, setDomain] = useState(null)
   const [protoOnly, setProtoOnly] = useState(false)
 
-  const domains = [...new Map(
-    tiles.flatMap((t) => t.blocks)
-      .filter((b) => b.domain)
-      .map((b) => [b.domain, b.color])
-  ).entries()]
+  const domains = [...new Set(
+    tiles.flatMap((t) => t.blocks).filter((b) => b.domain).map((b) => b.domain)
+  )]
 
   const dimmed = (t) => {
     if (!t) return false
@@ -108,34 +108,34 @@ export default function Wall({ tiles }) {
   return (
     <div className="wall">
       <div className="wall-head">
-        <span className="voice">your discipline, rendered — one tile per closed day</span>
-        <span className="wall-stats mono">
+        <span className="wall-lead">One tile per closed day — your record, drawn.</span>
+        <span className="wall-stats">
           {tiles.length} days · {Math.round((composed / (tiles.length || 1)) * 100)}% composed ·
-          {' '}{Math.round((proto / (tiles.length || 1)) * 100)}% protocol · {doneBlocks} blocks done
+          {' '}{Math.round((proto / (tiles.length || 1)) * 100)}% routine · {doneBlocks} blocks done
         </span>
       </div>
       <div className="wall-filters">
-        {domains.map(([slug, color]) => (
+        {domains.map((slug) => (
           <button key={slug}
-            className={`wf-chip ${domain === slug ? 'on' : ''}`}
-            style={{ '--c': color }}
+            className={`filter-chip ${domain === slug ? 'on' : ''}`}
+            style={{ '--c': domainCode(slug) }}
             onClick={() => setDomain(domain === slug ? null : slug)}>
             {slug}
           </button>
         ))}
-        <button className={`wf-chip proto ${protoOnly ? 'on' : ''}`}
+        <button className={`filter-chip ${protoOnly ? 'on' : ''}`}
           onClick={() => setProtoOnly(!protoOnly)}>
-          protocol days
+          routine days
         </button>
       </div>
       <div className="wall-cal">
         <div className="wall-dow">
           <span />
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} className="mono">{d}</span>)}
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
         </div>
         {rows.map(({ w, label }, i) => (
           <div key={i} className="wall-row">
-            <span className="wall-month mono">{label || ''}</span>
+            <span className="wall-month">{label || ''}</span>
             {w.map((t, j) => (
               <Tile key={t ? t.date : `e${j}`} t={t} dim={dimmed(t)} onOpen={setOpen} />
             ))}
