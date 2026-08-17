@@ -94,11 +94,16 @@ body {
 .tl-hour .rule { border-top: 1px solid var(--line-soft); height: 0; opacity: 0.7; }
 .tl-hour.major .h { color: var(--dim); }
 
-.gap-tag {
-  position: absolute; left: 78px; transform: translateY(-50%);
-  font-family: var(--font-inst); font-size: 9.5px; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--faint);
+.gap-divider {
+  position: absolute; left: 68px; right: 0; transform: translateY(-50%);
+  display: flex; align-items: center; gap: 10px; z-index: 1;
 }
+.gd-text {
+  font-family: var(--font-inst); font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--dim); white-space: nowrap;
+}
+.gd-line { flex: 1; border-top: 1px dashed var(--line); height: 0; opacity: 0.9; }
+.gd-line.short { flex: 0 0 14px; }
 
 .plane {
   position: absolute; left: 68px; right: 0;

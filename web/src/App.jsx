@@ -53,7 +53,7 @@ function elasticLayout(blocks, nowM, availH) {
   const GAP_PAD = 6 // vertical breathing between cards
   const hFor = (g, sc) => g.kind === 'block'
     ? Math.max(g.d * sc, 44)
-    : Math.min(Math.max(g.d * sc, g.d >= 30 ? 10 : 2), 64)
+    : Math.min(Math.max(g.d * sc, g.d >= 10 ? 14 : 2), 64)
   let lo = 0.05, hi = 6
   for (let i = 0; i < 26; i++) {
     const mid = (lo + hi) / 2
@@ -100,7 +100,7 @@ function Timeline({ today }) {
       </div>
     )
   const nowM = mins(today.now)
-  const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 40, 300))
+  const { segs, yOf, total, d0, d1 } = elasticLayout(today.blocks, nowM, Math.max((wrapH || 700) - 46, 300))
 
   // hour labels via the elastic map; skip any that would crowd (<16px apart)
   const marks = []
@@ -119,9 +119,11 @@ function Timeline({ today }) {
             {h % 3 === 0 && <span className="rule" />}
           </div>
         ))}
-        {segs.filter((g) => g.kind === 'gap' && g.d >= 45).map((g) => (
-          <div key={`g${g.s}`} className="gap-tag" style={{ top: g.y + g.h / 2 }}>
-            {fmtGap(g.d)} free
+        {segs.filter((g) => g.kind === 'gap' && g.d >= 10).map((g) => (
+          <div key={`g${g.s}`} className="gap-divider" style={{ top: g.y + g.h / 2 }}>
+            <span className="gd-line short" />
+            <span className="gd-text">{fmtGap(g.d)} free</span>
+            <span className="gd-line" />
           </div>
         ))}
         {segs.filter((g) => g.kind === 'block').map((g) => (
