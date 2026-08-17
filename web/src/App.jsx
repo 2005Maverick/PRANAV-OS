@@ -347,12 +347,7 @@ function TitleBlock({ view, setView, today, onArm, arming }) {
         <span className="mh-no anno" aria-hidden="true">{sheet[1]}</span>
         <h1 className="mh-name">{sheet[2]}</h1>
       </div>
-      <span className="mh-meta">
-        {dateStr}
-        <span className="mh-sep" aria-hidden="true">·</span>
-        <span className={`status-dot ${today.status || 'draft'}`} aria-hidden="true" />
-        {today.status || 'no plan'}
-      </span>
+      <span className="mh-meta">{dateStr}</span>
       <nav className="mh-nav" aria-label="Sheets">
         {SHEETS.map(([v, no, name]) => (
           <button key={v} className={`tb-tab ${view === v ? 'on' : ''}`} onClick={() => setView(v)}>
