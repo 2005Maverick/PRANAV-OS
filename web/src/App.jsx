@@ -15,9 +15,9 @@ function mins(hhmm) {
   return h * 60 + m
 }
 
-function Plane({ b, dayStart }) {
-  const top = ((mins(b.start) - dayStart * 60) / 60) * HOUR_PX
-  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * HOUR_PX - 7, 18)
+function Plane({ b, dayStart, hourPx = HOUR_PX }) {
+  const top = ((mins(b.start) - dayStart * 60) / 60) * hourPx
+  const height = Math.max(((mins(b.end) - mins(b.start)) / 60) * hourPx - 6, 16)
   const cls = ['plane', b.status, b.fixed ? 'fixed' : '', height < 34 ? 'slim' : ''].join(' ')
   return (
     <div className={cls} style={{ top, height, '--c': b.color }}>
@@ -34,6 +34,19 @@ function Plane({ b, dayStart }) {
 }
 
 function Timeline({ today }) {
+  const wrapRef = useRef(null)
+  const [wrapH, setWrapH] = useState(0)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const measure = () => setWrapH(el.clientHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [today.blocks.length])
+
   if (!today.blocks.length)
     return (
       <div className="empty-day">
@@ -43,20 +56,23 @@ function Timeline({ today }) {
     )
   const firstMin = Math.min(...today.blocks.map((b) => mins(b.start)), mins(today.now))
   const lastMin = Math.max(...today.blocks.map((b) => mins(b.end)), mins(today.now))
-  const dayStart = Math.max(Math.floor(firstMin / 60) - 1, 0)
-  const dayEnd = Math.min(Math.ceil(lastMin / 60) + 1, 24)
-  const hours = Array.from({ length: dayEnd - dayStart + 1 }, (_, i) => dayStart + i)
-  const nowTop = ((mins(today.now) - dayStart * 60) / 60) * HOUR_PX
+  const dayStart = Math.max(Math.floor(firstMin / 60), 0)
+  const dayEnd = Math.min(Math.ceil(lastMin / 60), 24)
+  const span = Math.max(dayEnd - dayStart, 1)
+  // fit the whole day to the available height; never below a readable floor
+  const hourPx = Math.max(wrapH ? (wrapH - 40) / span : HOUR_PX, 28)
+  const hours = Array.from({ length: span + 1 }, (_, i) => dayStart + i)
+  const nowTop = ((mins(today.now) - dayStart * 60) / 60) * hourPx
   return (
-    <div className="timeline">
-      <div className="tl-grid" style={{ height: (dayEnd - dayStart) * HOUR_PX }}>
+    <div className="timeline" ref={wrapRef}>
+      <div className="tl-grid" style={{ height: span * hourPx }}>
         {hours.map((h) => (
-          <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`} style={{ top: (h - dayStart) * HOUR_PX }}>
+          <div key={h} className={`tl-hour ${h % 6 === 0 ? 'major' : ''}`} style={{ top: (h - dayStart) * hourPx }}>
             <span className="h">{String(h).padStart(2, '0')}:00</span>
             <span className="rule" />
           </div>
         ))}
-        {today.blocks.map((b) => <Plane key={b.id} b={b} dayStart={dayStart} />)}
+        {today.blocks.map((b) => <Plane key={b.id} b={b} dayStart={dayStart} hourPx={hourPx} />)}
         <div className="nowline" style={{ top: nowTop }}>
           <span className="tag">NOW {today.now}</span>
         </div>
