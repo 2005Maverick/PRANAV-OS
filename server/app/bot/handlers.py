@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import (Application, CommandHandler, ContextTypes, MessageHandler, filters)
 
 from .. import config, db, llm
-from ..services import capture, planner, protocols
+from ..services import capture, onboarding, planner, protocols
 
 log = logging.getLogger("bot")
 
@@ -77,6 +77,12 @@ async def cmd_score(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("\n".join(lines))
 
 
+async def cmd_onboard(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    if not await _owner_gate(update):
+        return
+    await update.message.reply_text(await onboarding.start())
+
+
 async def cmd_help(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not await _owner_gate(update):
         return
@@ -113,7 +119,9 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return row
 
     m = REPLAN_RE.match(text)
-    if m:
+    if await onboarding.active():
+        reply = await onboarding.handle(text)
+    elif m:
         await update.message.reply_text("Redrawing…")
         reply = await planner.replan(m.group(1))
     elif low in ("done", "done.", "ok done", "did it"):
@@ -219,6 +227,7 @@ def register(app: Application):
     app.add_handler(CommandHandler("replan", cmd_replan))
     app.add_handler(CommandHandler("score", cmd_score))
     app.add_handler(CommandHandler("help", cmd_help))
+    app.add_handler(CommandHandler("onboard", cmd_onboard))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     app.add_handler(MessageHandler(
         filters.VOICE | filters.VIDEO | filters.VIDEO_NOTE | filters.PHOTO | filters.Document.ALL, on_media))

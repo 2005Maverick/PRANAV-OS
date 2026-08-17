@@ -16,11 +16,32 @@ def _today() -> dt.date:
 async def _ensure_day(date: dt.date) -> int:
     row = await db.fetchrow("SELECT id FROM days WHERE date=$1", date)
     if row:
-        return row["id"]
-    return await db.fetchval(
-        "INSERT INTO days (date, wake_target) VALUES ($1,$2) RETURNING id",
-        date, dt.time.fromisoformat(config.DEFAULT_WAKE),
-    )
+        day_id = row["id"]
+    else:
+        wake = await db.get_setting("usual_wake") or config.DEFAULT_WAKE
+        day_id = await db.fetchval(
+            "INSERT INTO days (date, wake_target) VALUES ($1,$2) RETURNING id",
+            date, dt.time.fromisoformat(wake),
+        )
+    await _materialize_recurring(day_id, date)
+    return day_id
+
+
+async def _materialize_recurring(day_id: int, date: dt.date):
+    """Weekly fixed constraints (classes) become this day's fixed blocks, once."""
+    recs = await db.fetch(
+        "SELECT * FROM recurring_blocks WHERE active AND dow=$1", date.weekday())
+    for r in recs:
+        exists = await db.fetchval(
+            "SELECT COUNT(*) FROM blocks WHERE day_id=$1 AND is_fixed AND title=$2", day_id, r["title"])
+        if exists:
+            continue
+        await db.execute(
+            """INSERT INTO blocks (day_id, domain_id, title, start_at, end_at, kind, is_fixed)
+               VALUES ($1,$2,$3,$4,$5,'fixed',TRUE)""",
+            day_id, r["domain_id"], r["title"],
+            dt.datetime.combine(date, r["start_t"], tzinfo=config.TZ),
+            dt.datetime.combine(date, r["end_t"], tzinfo=config.TZ))
 
 
 async def _domains() -> list:
@@ -63,6 +84,7 @@ async def draft_day(date: dt.date) -> str:
 
     prompt = {
         "date": str(date),
+        "energy_peaks": await db.get_setting("energy_peaks"),
         "fixed_blocks": [{"title": f["title"], "start": f["start_at"].astimezone(config.TZ).strftime("%H:%M"),
                           "end": f["end_at"].astimezone(config.TZ).strftime("%H:%M")} for f in fixed],
         "floors_rolling": floors,

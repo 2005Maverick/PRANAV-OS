@@ -72,6 +72,17 @@ CREATE TABLE blocks (
 CREATE INDEX idx_blocks_day ON blocks(day_id);
 CREATE INDEX idx_blocks_start ON blocks(start_at);
 
+-- weekly-recurring fixed constraints (classes, standing meetings)
+CREATE TABLE recurring_blocks (
+    id        SERIAL PRIMARY KEY,
+    dow       INT NOT NULL,                     -- 0=Mon .. 6=Sun
+    title     TEXT NOT NULL,
+    domain_id INT REFERENCES domains(id),
+    start_t   TIME NOT NULL,
+    end_t     TIME NOT NULL,
+    active    BOOLEAN DEFAULT TRUE
+);
+
 CREATE TABLE closeouts (
     id         SERIAL PRIMARY KEY,
     block_id   INT NOT NULL REFERENCES blocks(id) ON DELETE CASCADE,
