@@ -267,7 +267,7 @@ export default function App() {
             <Timeline today={today} />
           </>
         )}
-        {view === 'week' && (week ? <Week days={week} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
+        {view === 'week' && (week ? <Week days={week} rail={rail} /> : <div className="empty-day"><div className="voice">No week data yet.</div></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="empty-day"><div className="voice">The wall begins when your first day closes.</div></div>)}
       </main>
       {view === 'today' && <Rail rail={rail} />}

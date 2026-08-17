@@ -75,14 +75,25 @@ function Spectrum({ blocks }) {
   )
 }
 
-export default function Week({ days }) {
+export default function Week({ days, rail }) {
   const laid = days.map((d) => ({ ...d, blocks: layout(d.blocks) }))
   const [lo, hi] = range(laid)
   const hours = []
   for (let h = Math.ceil(lo / 60); h <= hi / 60; h += 3) hours.push(h)
   const y = (m) => ((m - lo) / (hi - lo)) * COL_H
   return (
-    <div className="week">
+    <div className="week-page">
+      {rail?.floors && (
+        <div className="week-floors">
+          <span className="un-label">floors this window</span>
+          {rail.floors.map((f) => (
+            <span key={f.slug} className={`wk-floor ${f.ok ? 'ok' : ''}`}>
+              {f.name} <span className="mono">{f.done}/{f.target}</span>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="week">
       <div className="wk-gutter">
         {hours.map((h) => (
           <span key={h} className="wk-h" style={{ top: y(h * 60) }}>
@@ -109,6 +120,7 @@ export default function Week({ days }) {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
