@@ -131,12 +131,16 @@
   color-scheme: dark;
 }
 [data-theme="dark"] .masthead { border-bottom-color: var(--border-strong); }
+[data-theme="dark"] .room {
+  background: color-mix(in oklab, var(--c) 36%, oklch(0.23 0 0));
+  border-color: color-mix(in oklab, var(--c) 45%, var(--border-strong));
+}
 [data-theme="dark"] .room.fixed {
   background:
     repeating-linear-gradient(45deg,
       transparent 0 5px,
-      oklch(0.92 0.008 90 / 0.10) 5px 6px),
-    var(--surface);
+      oklch(0.92 0.008 90 / 0.08) 5px 6px),
+    color-mix(in oklab, var(--c) 36%, oklch(0.23 0 0));
 }
 
 /* ---------- base ---------- */
@@ -294,8 +298,8 @@ button, input, select, textarea { font-family: inherit; }
 .room {
   position: absolute; left: 64px; right: var(--s-4);
   border-radius: var(--r-2); overflow: hidden;
-  background: color-mix(in oklch, var(--c) 7%, var(--surface));
-  border: 1px solid color-mix(in oklch, var(--c) 30%, var(--line-ink));
+  background: color-mix(in oklab, var(--c) 26%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--c) 45%, var(--line-ink));
   border-left: 3px solid var(--c);
   padding: var(--s-3) var(--s-4);
   display: flex; flex-direction: column; justify-content: flex-start;
@@ -309,7 +313,7 @@ button, input, select, textarea { font-family: inherit; }
 .room .r-dom {
   font-family: var(--font-anno); font-size: var(--fs-anno);
   letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--text-muted);
+  color: color-mix(in oklab, var(--text) 78%, var(--c));
   margin-right: var(--s-3);
 }
 .swatch {
@@ -319,18 +323,20 @@ button, input, select, textarea { font-family: inherit; }
 }
 .room .r-time {
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 500;
-  font-variant-numeric: tabular-nums; color: var(--text-muted); flex-shrink: 0;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+  color: color-mix(in oklab, var(--text) 78%, var(--c));
 }
 .room .r-next {
-  font-size: var(--fs-ui); color: var(--text-muted); margin-top: var(--s-1);
+  font-size: var(--fs-ui); margin-top: var(--s-1);
+  color: color-mix(in oklab, var(--text) 70%, var(--c));
   white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
 }
 .room.fixed {
   background:
     repeating-linear-gradient(45deg,
       transparent 0 5px,
-      oklch(0.26 0.015 260 / 0.18) 5px 6px),
-    var(--surface);
+      oklch(0.26 0.015 260 / 0.14) 5px 6px),
+    color-mix(in oklab, var(--c) 26%, var(--surface));
 }
 .room.done { opacity: 0.55; }
 .room.done .r-title { text-decoration: line-through; text-decoration-color: var(--text-faint); text-decoration-thickness: 1px; }
