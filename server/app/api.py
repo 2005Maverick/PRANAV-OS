@@ -532,6 +532,126 @@ async def library_daily():
     return {"id": note_id}
 
 
+# ---------- Arcs (long-horizon goals: project / umbrella / target / ongoing) ----------
+from .services import arcs_svc  # noqa: E402
+
+
+@router.get("/arcs/tree")
+async def arcs_tree():
+    return await arcs_svc.tree()
+
+
+@router.get("/arcs/node/{arc_id}")
+async def arcs_node(arc_id: int):
+    node = await arcs_svc.get_arc(arc_id)
+    if not node:
+        raise HTTPException(status_code=404, detail="arc not found")
+    return node
+
+
+class ArcCreateIn(BaseModel):
+    title: str = "Untitled goal"
+    type: str = "project"
+    domain: str | None = None
+    parent_id: int | None = None
+    deadline: str | None = None
+    target_amount: float | None = None
+    target_unit: str | None = None
+    note: str | None = None
+
+
+@router.post("/arcs")
+async def arcs_create(body: ArcCreateIn):
+    arc_id = await arcs_svc.create_arc(
+        body.title, body.type, body.domain, body.parent_id, body.deadline,
+        body.target_amount, body.target_unit, body.note)
+    return {"id": arc_id}
+
+
+class ArcUpdateIn(BaseModel):
+    title: str | None = None
+    type: str | None = None
+    domain: str | None = None
+    deadline: str | None = None
+    target_amount: float | None = None
+    target_unit: str | None = None
+    note: str | None = None
+    status: str | None = None
+
+
+@router.put("/arcs/{arc_id}")
+async def arcs_update(arc_id: int, body: ArcUpdateIn):
+    ok = await arcs_svc.update_arc(arc_id, **body.model_dump(exclude_none=True))
+    return {"ok": ok}
+
+
+@router.delete("/arcs/{arc_id}")
+async def arcs_delete(arc_id: int):
+    return {"ok": await arcs_svc.delete_arc(arc_id)}
+
+
+class StepCreateIn(BaseModel):
+    kind: str = "do"
+    title: str = ""
+    est_minutes: int = 0
+    waiting_on: str | None = None
+    cadence: str | None = None
+
+
+@router.post("/arcs/{arc_id}/step")
+async def arcs_add_step(arc_id: int, body: StepCreateIn):
+    sid = await arcs_svc.add_step(arc_id, body.kind, body.title, body.est_minutes,
+                                  body.waiting_on, body.cadence)
+    return {"id": sid}
+
+
+class StepUpdateIn(BaseModel):
+    title: str | None = None
+    est_minutes: int | None = None
+    spent_minutes: int | None = None
+    done: bool | None = None
+    waiting_on: str | None = None
+    cadence: str | None = None
+    last_done: str | None = None
+
+
+@router.put("/arcs/step/{step_id}")
+async def arcs_update_step(step_id: int, body: StepUpdateIn):
+    return {"ok": await arcs_svc.update_step(step_id, **body.model_dump(exclude_none=True))}
+
+
+class LogIn(BaseModel):
+    minutes: int
+    mark_done: bool = False
+
+
+@router.post("/arcs/step/{step_id}/log")
+async def arcs_log_time(step_id: int, body: LogIn):
+    return {"ok": await arcs_svc.log_time(step_id, body.minutes, body.mark_done)}
+
+
+@router.post("/arcs/step/{step_id}/tick")
+async def arcs_tick_keep(step_id: int):
+    return {"ok": await arcs_svc.tick_keep(step_id)}
+
+
+@router.delete("/arcs/step/{step_id}")
+async def arcs_delete_step(step_id: int):
+    return {"ok": await arcs_svc.delete_step(step_id)}
+
+
+class ContribIn(BaseModel):
+    amount: float
+    note: str | None = None
+    on_date: str | None = None
+
+
+@router.post("/arcs/{arc_id}/contrib")
+async def arcs_add_contrib(arc_id: int, body: ContribIn):
+    cid = await arcs_svc.add_contrib(arc_id, body.amount, body.note, body.on_date)
+    return {"id": cid}
+
+
 @router.get("/lists")
 async def lists_get():
     rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")
