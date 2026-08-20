@@ -670,7 +670,7 @@ button, input, select, textarea { font-family: inherit; }
    SHEET 06 · ARCS — the surveyor's route. Hand-inked long-game
    goals (rough.js). Warm paper, blue-black ink, one red flag.
    ============================================================ */
-.arcs-sheet { max-width: 940px; }
+.arcs-sheet { max-width: 1500px; margin: 0 auto; }
 .arcs-top {
   display: flex; align-items: baseline; justify-content: space-between;
   gap: var(--s-4); margin-bottom: var(--s-2);
