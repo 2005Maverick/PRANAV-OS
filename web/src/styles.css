@@ -57,11 +57,11 @@
   --m-uni: var(--_p-graph);
   --m-reward: var(--_p-felt);
   /* the map — a dark drafting table so linked notes glow */
-  --map-bg: oklch(0.22 0.02 260);
-  --map-ink: oklch(0.90 0.008 90);
-  --map-faint: oklch(0.62 0.010 260);
-  --map-line: oklch(0.45 0.012 260);
-  --map-grid: oklch(0.28 0.015 260);
+  --map-bg: oklch(0.16 0.015 260);
+  --map-ink: oklch(0.92 0.008 90);
+  --map-node: oklch(0.70 0.012 260);
+  --map-faint: oklch(0.60 0.010 260);
+  --map-line: oklch(0.40 0.012 260);
 
   /* ---------- 3 · type / space / radius / shadow / motion ---------- */
   --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -133,10 +133,10 @@
   --m-uni: oklch(0.68 0.014 260);
   --m-felt: oklch(0.68 0.045 170);
   --map-bg: oklch(0.09 0 0);
-  --map-ink: oklch(0.92 0.006 90);
-  --map-faint: oklch(0.60 0.006 90);
-  --map-line: oklch(0.38 0 0);
-  --map-grid: oklch(0.16 0 0);
+  --map-ink: oklch(0.94 0.006 90);
+  --map-node: oklch(0.68 0 0);
+  --map-faint: oklch(0.58 0.006 90);
+  --map-line: oklch(0.34 0 0);
   --e-1: 0 1px 2px oklch(0 0 0 / 0.7);
   --e-2: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5);
   --e-3: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5), 0 12px 32px oklch(0 0 0 / 0.45);
@@ -1170,8 +1170,6 @@ button, input, select, textarea { font-family: inherit; }
   height: 74vh; border: 1px solid var(--border);
   border-radius: var(--r-3); overflow: hidden;
   background-color: var(--map-bg);
-  background-image: radial-gradient(var(--map-grid) 1px, transparent 1.4px);
-  background-size: 26px 26px;
   display: grid; place-items: center; cursor: grab;
 }
 .lb-graph-canvas:active { cursor: grabbing; }
@@ -1228,10 +1226,13 @@ button, input, select, textarea { font-family: inherit; }
   color: var(--text-faint); text-decoration: line-through; text-decoration-color: var(--border-strong);
 }
 .lb-pm blockquote {
-  border-left: 3px solid var(--border-strong); padding-left: var(--s-4);
-  font-size: var(--fs-lg); font-style: italic; line-height: 1.5;
-  color: var(--text-muted); margin-bottom: var(--s-4);
+  border-left: 3px solid var(--accent); padding: var(--s-2) var(--s-4);
+  font-size: var(--fs-read); line-height: 1.6;
+  color: var(--text-muted); margin: 0 0 var(--s-5);
+  background: color-mix(in oklab, var(--accent) 5%, transparent);
+  border-radius: 0 var(--r-2) var(--r-2) 0;
 }
+.lb-pm blockquote p { margin: 0; }
 .lb-pm pre {
   background: var(--surface-raised); border: 1px solid var(--border);
   border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin-bottom: var(--s-5);

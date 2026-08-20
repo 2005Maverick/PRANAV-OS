@@ -22,8 +22,6 @@ function resolve(expr, fallback = '#8a8f98') {
   cache.set(expr, out)
   return out
 }
-const tagColor = (tag) => resolve(`var(--m-${tag}, var(--_p-graph))`)
-
 export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
   const [graph, setGraph] = useState(null)
   const [err, setErr] = useState(false)
@@ -83,6 +81,7 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
   }, [data])
 
   const MAP_INK = resolve('var(--map-ink)', '#e6e6e6')
+  const MAP_NODE = resolve('var(--map-node)', '#9aa0aa')
   const MAP_FAINT = resolve('var(--map-faint)', '#8a8f98')
   const MAP_LINE = resolve('var(--map-line)', '#555')
   const ACCENT = resolve('var(--accent)', '#c0392b')
@@ -96,43 +95,36 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
     if (boxRef.current) boxRef.current.style.cursor = n ? 'pointer' : 'grab'
   }
 
+  const nodeR = (n) => 2.2 + Math.sqrt(n.val) * 1.7
+
+  // Obsidian-style: small solid grey dots, brighter on focus, red = the note
+  // you're in. No colored bubbles, no outlines, no gloss.
   const drawNode = (n, ctx, scale) => {
     const focused = n.id === hoverId
     const on = !highlight || highlight.has(n.id)
-    const r = 3 + Math.sqrt(n.val) * 1.7
-    const col = tagColor(n.tag)
-    // faint fill disc — restrained, no gloss
-    ctx.globalAlpha = on ? (focused ? 0.5 : 0.24) : 0.09
+    const r = nodeR(n)
+    ctx.globalAlpha = on ? 1 : 0.22
     ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2 * Math.PI)
-    ctx.fillStyle = col; ctx.fill()
-    // crisp outline ring
-    ctx.globalAlpha = on ? 1 : 0.16
-    ctx.lineWidth = (focused ? 2 : 1.35) / scale
-    ctx.strokeStyle = col; ctx.stroke()
-    // ring on the note you're in
-    if (n.id === currentId) {
-      ctx.globalAlpha = 1
-      ctx.beginPath(); ctx.arc(n.x, n.y, r + 3.4, 0, 2 * Math.PI)
-      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.3 / scale; ctx.stroke()
-    }
-    // label — mono, decluttered to hubs / focus cluster / zoom / current
+    ctx.fillStyle = n.id === currentId ? ACCENT
+      : (on ? (focused ? MAP_INK : MAP_NODE) : MAP_NODE)
+    ctx.fill()
+    // label — subtle, sans, decluttered
     const showLabel = highlight ? highlight.has(n.id)
-      : (scale > 1.2 || n.val >= 3 || n.id === currentId)
+      : (scale > 0.85 || n.val >= 3 || n.id === currentId)
     if (showLabel) {
-      const fs = Math.max(10 / scale, 2.5)
-      ctx.font = `500 ${fs}px "IBM Plex Mono", ui-monospace, monospace`
+      const fs = Math.max(10.5 / scale, 2)
+      ctx.font = `${fs}px "Archivo Variable", Archivo, sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
-      ctx.globalAlpha = on ? 1 : 0.45
-      ctx.fillStyle = on ? MAP_INK : MAP_FAINT
-      ctx.fillText(n.title, n.x, n.y + r + 4)
+      ctx.globalAlpha = on ? 0.92 : 0.3
+      ctx.fillStyle = focused || n.id === currentId ? MAP_INK : MAP_FAINT
+      ctx.fillText(n.title, n.x, n.y + r + 3 / scale)
     }
     ctx.globalAlpha = 1
   }
 
   const hitPaint = (n, color, ctx) => {
-    const r = 3 + Math.sqrt(n.val) * 2.2
-    ctx.beginPath(); ctx.arc(n.x, n.y, r + 2, 0, 2 * Math.PI)
+    ctx.beginPath(); ctx.arc(n.x, n.y, nodeR(n) + 2, 0, 2 * Math.PI)
     ctx.fillStyle = color; ctx.fill()
   }
 
@@ -169,7 +161,19 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
               backgroundColor="rgba(0,0,0,0)"
               autoPauseRedraw={false}
               cooldownTicks={90}
-              onEngineStop={() => fgRef.current && fgRef.current.zoomToFit(500, 48)}
+              onEngineStop={() => {
+                const fg = fgRef.current
+                if (!fg || !data.nodes.length) return
+                const xs = data.nodes.map((n) => n.x)
+                const ys = data.nodes.map((n) => n.y)
+                const minX = Math.min(...xs), maxX = Math.max(...xs)
+                const minY = Math.min(...ys), maxY = Math.max(...ys)
+                const pad = 70
+                const zx = size.w / ((maxX - minX) + pad * 2 || 1)
+                const zy = size.h / ((maxY - minY) + pad * 2 || 1)
+                fg.centerAt((minX + maxX) / 2, (minY + maxY) / 2, 500)
+                fg.zoom(Math.min(zx, zy, 1.6), 500)   // cap so few nodes stay small
+              }}
               nodeVal={(n) => n.val}
               nodeCanvasObjectMode={() => 'replace'}
               nodeCanvasObject={drawNode}
