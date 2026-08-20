@@ -888,31 +888,103 @@ button, input, select, textarea { font-family: inherit; }
   .rt-row-label { min-width: 100%; }
 }
 
-/* ---------- sleep & energy ---------- */
-.slp-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px; }
-@media (max-width: 900px) { .slp-cols { grid-template-columns: 1fr; } }
-.slp-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 110px; }
-.slp-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.slp-bar span { width: 20px; background: var(--dim); border-radius: 3px 3px 0 0; }
-.slp-bar span.low { background: var(--amber); }
-.slp-bar em { font-style: normal; font-size: 9px; color: var(--faint); }
-.slp-topo { display: flex; align-items: flex-end; gap: 5px; min-height: 100px; }
-.topo-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.topo-stack { display: flex; flex-direction: column-reverse; width: 14px; }
-.topo-stack span { width: 100%; display: block; }
-.t-deep { background: var(--acid); }
-.t-shallow { background: var(--faint); }
-.t-fail { background: var(--amber); opacity: 0.75; }
-.topo-col em { font-style: normal; font-size: 9px; color: var(--faint); }
-.topo-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 10px; color: var(--faint); }
-.topo-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; }
+/* ============================================================
+   SHEET 07 · SLEEP & ENERGY — the hand-inked 24-hour dial and its
+   quiet companions. Tokens only; Day + Night print. See SleepDial.jsx.
+   ============================================================ */
+.slp-sheet { max-width: 1180px; margin: 0 auto; }
+.slp-err {
+  color: var(--accent-text); border: 1px solid var(--accent);
+  border-radius: var(--r-2); padding: var(--s-2) var(--s-3); margin-bottom: var(--s-4);
+}
+.slp-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: var(--s-7); align-items: start; }
+@media (max-width: 900px) { .slp-grid { grid-template-columns: 1fr; gap: var(--s-6); } }
+
+/* ---------- hero: the dial + the window controls ---------- */
+.slp-hero {
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--r-3);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, var(--surface)), var(--surface));
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  position: sticky; top: var(--s-4);
+}
+@media (max-width: 900px) { .slp-hero { position: static; } }
+.slp-dial-wrap { width: 100%; }
+.slp-dial-svg { display: block; width: 100%; overflow: visible; }
+
+.slp-window {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--border);
+}
+.slp-window-h { color: var(--text-faint); }
+.slp-time { display: flex; align-items: center; gap: var(--s-2); }
+.slp-time .anno { color: var(--text-muted); }
+.slp-window-note { color: var(--text-faint); margin-left: auto; }
+
+/* ---------- the side column blocks ---------- */
+.slp-side { display: flex; flex-direction: column; gap: var(--s-5); }
+.slp-block {
+  border: 1px solid var(--border); border-radius: var(--r-3);
+  background: var(--surface); padding: var(--s-4) var(--s-5) var(--s-5);
+}
+.slp-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
+.slp-h .cap { font-size: var(--fs-ui); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); }
+.slp-h-sub { color: var(--text-faint); }
+.slp-block-foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
+.slp-flash { color: var(--success); }
+
+.slp-ledger-wrap, .slp-payoff-wrap { width: 100%; }
+.slp-ledger-svg, .slp-payoff-svg { display: block; width: 100%; overflow: visible; }
+
+/* ---------- log-a-night form ---------- */
+.slp-logform { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-3); }
+.slp-log-lab { color: var(--text-muted); }
+
+/* ---------- wind-down checklist ---------- */
+.slp-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.slp-step-btn {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%;
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: var(--s-2); border-radius: var(--r-2); color: var(--text);
+}
+.slp-step-btn:hover { background: var(--surface-raised); }
+.slp-tick {
+  flex: 0 0 auto; width: 20px; height: 20px; border-radius: var(--r-1);
+  border: 1.5px solid var(--border-strong); display: grid; place-items: center;
+  font-family: var(--font-anno); font-size: 12px; color: var(--accent-text);
+}
+.slp-step.on .slp-tick { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.slp-step-text { flex: 1 1 auto; font-size: var(--fs-ui); }
+.slp-step.on .slp-step-text { color: var(--text-muted); }
+.slp-ess {
+  flex: 0 0 auto; color: var(--accent-text);
+  border: 1px solid var(--accent); border-radius: var(--r-1); padding: 0 var(--s-2);
+}
+.slp-empty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-3); }
+.slp-empty .anno { color: var(--text-muted); max-width: 46ch; line-height: 1.5; }
+
+/* edit mode */
+.slp-edit { display: flex; flex-direction: column; gap: var(--s-2); }
+.slp-edit-hint { color: var(--text-faint); }
+.slp-edit-foot { display: flex; gap: var(--s-2); }
 .slp-proto {
-  width: 100%; background: var(--ink-lift); color: var(--bone);
-  border: 1px solid var(--line); border-radius: 8px;
-  font-family: var(--font-ui); font-size: 13px; padding: 10px 12px;
+  width: 100%; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border-strong); border-radius: var(--r-2);
+  font-family: var(--font-body); font-size: var(--fs-ui); padding: var(--s-3);
   resize: vertical; outline: none;
 }
-.slp-proto:focus { border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
+.slp-proto:focus { border-color: var(--accent); }
+
+/* ---------- payoff takeaway ---------- */
+.slp-takeaway { font-size: var(--fs-ui); color: var(--text-muted); margin-top: var(--s-2); line-height: 1.5; }
+.slp-takeaway strong { color: var(--text); font-weight: 700; }
+
+/* shared: the "add / edit" text button (mirrors arcs) */
+.slp-block .rc-add {
+  background: none; border: none; color: var(--text-faint); cursor: pointer;
+  font-family: var(--font-anno); font-size: var(--fs-anno); padding: 0;
+}
+.slp-block .rc-add:hover { color: var(--accent-text); }
 
 /* ---------- vault ---------- */
 .vault-box {
