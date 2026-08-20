@@ -166,8 +166,51 @@ export default function Editor({ note, allNotes, onChange }) {
     </button>
   )
 
+  // always-visible toolbar button (paper style)
+  const tb = (active, label, title, onClick) => (
+    <button type="button" className={`lb-tb-btn ${active ? 'on' : ''}`}
+      onMouseDown={(e) => e.preventDefault()} onClick={onClick} title={title} aria-label={title}>
+      {label}
+    </button>
+  )
+
+  const textStyle = editor.isActive('heading', { level: 1 }) ? 'h1'
+    : editor.isActive('heading', { level: 2 }) ? 'h2'
+      : editor.isActive('heading', { level: 3 }) ? 'h3' : 'p'
+  const setTextStyle = (v) => {
+    const c = editor.chain().focus()
+    if (v === 'p') c.setParagraph().run()
+    else c.setHeading({ level: Number(v[1]) }).run()
+  }
+
   return (
     <>
+      {/* the always-there toolbar — nothing to memorise */}
+      <div className="lb-tb" role="toolbar" aria-label="Formatting">
+        <select className="lb-tb-sel" value={textStyle}
+          onChange={(e) => setTextStyle(e.target.value)} aria-label="Text size">
+          <option value="p">Normal text</option>
+          <option value="h1">Heading — large</option>
+          <option value="h2">Heading — medium</option>
+          <option value="h3">Heading — small</option>
+        </select>
+        <span className="lb-tb-sep" />
+        {tb(editor.isActive('bold'), <b>B</b>, 'Bold', () => editor.chain().focus().toggleBold().run())}
+        {tb(editor.isActive('italic'), <i>I</i>, 'Italic', () => editor.chain().focus().toggleItalic().run())}
+        {tb(editor.isActive('strike'), <s>S</s>, 'Strikethrough', () => editor.chain().focus().toggleStrike().run())}
+        <span className="lb-tb-sep" />
+        {tb(editor.isActive('bulletList'), '• List', 'Bullet list', () => editor.chain().focus().toggleBulletList().run())}
+        {tb(editor.isActive('orderedList'), '1. List', 'Numbered list', () => editor.chain().focus().toggleOrderedList().run())}
+        {tb(editor.isActive('taskList'), '☐ To-do', 'Checklist', () => editor.chain().focus().toggleTaskList().run())}
+        <span className="lb-tb-sep" />
+        {tb(editor.isActive('blockquote'), '“ Quote', 'Quote', () => editor.chain().focus().toggleBlockquote().run())}
+        {tb(editor.isActive('codeBlock'), '‹/› Code', 'Code block', () => editor.chain().focus().toggleCodeBlock().run())}
+        {tb(false, '— Divider', 'Divider', () => editor.chain().focus().setHorizontalRule().run())}
+        <span className="lb-tb-sep" />
+        {tb(editor.isActive('link'), '⧉ Link', 'Link', promptLink)}
+        {tb(false, '[[ ]] Note', 'Link to another note', () => editor.chain().focus().insertContent('[[').run())}
+      </div>
+
       <BubbleMenu editor={editor} className="lb-bubble" options={{ placement: 'top', offset: 8 }}>
         {bb(editor.isActive('bold'), '', 'B', () => editor.chain().focus().toggleBold().run())}
         {bb(editor.isActive('italic'), 'it', 'I', () => editor.chain().focus().toggleItalic().run())}

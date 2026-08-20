@@ -34,6 +34,8 @@ export default function Library({ demo }) {
   const [note, setNote] = useState(null)      // full open note
   const [q, setQ] = useState('')
   const [showGraph, setShowGraph] = useState(false)
+  const [leftOpen, setLeftOpen] = useState(true)
+  const [rightOpen, setRightOpen] = useState(true)
   const [save, setSave] = useState('idle')    // idle | saving | saved
   const [err, setErr] = useState(null)
   const [tagDraft, setTagDraft] = useState('')
@@ -134,6 +136,16 @@ export default function Library({ demo }) {
     try { await api.pinNote(note.id, pinned) } catch { setErr('Could not pin the note.') }
   }
 
+  const deleteNote = async () => {
+    if (!note) return
+    if (!window.confirm(`Delete “${note.title}”? This can’t be undone.`)) return
+    const id = note.id
+    const remaining = notes.filter((n) => n.id !== id)
+    setNotes(remaining)
+    setOpenId(remaining[0]?.id || null)
+    try { await api.deleteNote(id) } catch { setErr('Could not delete the note.'); loadList(q, true) }
+  }
+
   /* ---------- tags ---------- */
   const setTags = (tags) => {
     setNote((n) => (n ? { ...n, tags } : n))
@@ -157,9 +169,15 @@ export default function Library({ demo }) {
   const crumb = note ? `${note.tags[0] || 'note'} · ${(note.title || '').toLowerCase().replace(/\s+/g, '-').slice(0, 24)}` : ''
 
   return (
-    <div className="lb">
+    <div className={`lb ${leftOpen ? '' : 'lc'} ${rightOpen ? '' : 'rc'}`}>
       {/* ---- left: the shelf ---- */}
+      {leftOpen ? (
       <aside className="lb-shelf">
+        <div className="lb-rail-head">
+          <span className="cap">Notes</span>
+          <button className="lb-collapse" onClick={() => setLeftOpen(false)}
+            title="Hide the notes list" aria-label="Hide the notes list">«</button>
+        </div>
         <div className="lb-search">
           <span className="lb-search-i anno" aria-hidden="true">⌕</span>
           <input className="lb-search-in" placeholder="Search the library…"
@@ -180,6 +198,12 @@ export default function Library({ demo }) {
         {rest.map((n) => <NoteRow key={n.id} n={n} active={n.id === openId} onOpen={setOpenId} />)}
         {!notes.length && <p className="lb-empty anno">{q ? `No note matches “${q}”.` : 'No notes yet — start one.'}</p>}
       </aside>
+      ) : (
+        <button className="lb-strip left" onClick={() => setLeftOpen(true)}
+          title="Show the notes list" aria-label="Show the notes list">
+          <span className="lb-strip-txt">» Notes</span>
+        </button>
+      )}
 
       {/* ---- middle: the page ---- */}
       <section className="lb-page">
@@ -187,8 +211,16 @@ export default function Library({ demo }) {
           <div className="lb-doc">
             <div className="lb-doc-head">
               <span className="lb-crumb anno">{crumb}</span>
-              <span className="lb-doc-meta anno">
-                {save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved ✓' : `Edited ${note.updated || ''}`}
+              <span className="lb-doc-actions">
+                <span className="lb-doc-meta anno">
+                  {save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved ✓' : `Edited ${note.updated || ''}`}
+                </span>
+                <button className="lb-act" onClick={togglePin}
+                  title={note.pinned ? 'Unpin' : 'Pin'} aria-label={note.pinned ? 'Unpin' : 'Pin'}>
+                  {note.pinned ? '★' : '☆'}
+                </button>
+                <button className="lb-act lb-act-del" onClick={deleteNote}
+                  title="Delete note" aria-label="Delete note">Delete</button>
               </span>
             </div>
             <input className="lb-h1 lb-title" value={note.title} onChange={onTitle}
@@ -203,12 +235,15 @@ export default function Library({ demo }) {
       </section>
 
       {/* ---- right: the connections ---- */}
+      {rightOpen ? (
       <aside className="lb-links">
+        <div className="lb-rail-head">
+          <span className="cap">Connections</span>
+          <button className="lb-collapse" onClick={() => setRightOpen(false)}
+            title="Hide connections" aria-label="Hide connections">»</button>
+        </div>
         {note && (
           <>
-            <button className="btn lb-pin" onClick={togglePin}>
-              {note.pinned ? '★ Pinned' : '☆ Pin this note'}
-            </button>
             <div className="lb-links-sec">
               <div className="lb-group cap">Mentioned in</div>
               {(note.mentioned_in || []).map((m) => (
@@ -249,6 +284,12 @@ export default function Library({ demo }) {
           ◍ Open the map
         </button>
       </aside>
+      ) : (
+        <button className="lb-strip right" onClick={() => setRightOpen(true)}
+          title="Show connections" aria-label="Show connections">
+          <span className="lb-strip-txt">Connections «</span>
+        </button>
+      )}
 
       {showGraph && (
         <Suspense fallback={null}>
