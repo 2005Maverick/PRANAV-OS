@@ -90,18 +90,21 @@ def _target_state(arc: dict, contrib_sum: float) -> dict:
     tgt = float(arc["target_amount"] or 0)
     pct = round(min(contrib_sum / tgt, 1) * 100) if tgt else 0
     out = {"amount": contrib_sum, "target": tgt, "unit": arc["target_unit"] or "",
-           "pct": pct, "on_pace": None, "need_per_week": None, "at_per_week": None}
+           "pct": pct, "pace_pct": 0, "on_pace": None,
+           "need_per_week": None, "at_per_week": None}
     if arc["deadline"] and tgt:
         start = arc["created_at"].date() if hasattr(arc["created_at"], "date") else _today()
         end = arc["deadline"]
         today = _today()
-        total_weeks = max((end - start).days / 7, 0.5)
-        elapsed_weeks = max((today - start).days / 7, 0.14)
+        total_days = max((end - start).days, 1)
+        elapsed_days = max((today - start).days, 1)
+        elapsed_weeks = max(elapsed_days / 7, 0.14)
         remaining = max(tgt - contrib_sum, 0)
         weeks_left = max((end - today).days / 7, 0.14)
         out["need_per_week"] = round(remaining / weeks_left)
         out["at_per_week"] = round(contrib_sum / elapsed_weeks)
-        out["on_pace"] = out["at_per_week"] >= (tgt / total_weeks) * 0.95
+        out["pace_pct"] = round(min(elapsed_days / total_days, 1) * 100)
+        out["on_pace"] = pct >= out["pace_pct"]
     return out
 
 

@@ -4,7 +4,8 @@ import Wall from './Wall.jsx'
 import Review from './Review.jsx'
 import { Lists, Finance } from './ListsFinance.jsx'
 import Library from './Library.jsx'
-import { Arcs, Sleep } from './ArcsSleep.jsx'
+import Arcs from './Arcs.jsx'
+import { Sleep } from './ArcsSleep.jsx'
 import Vault from './Vault.jsx'
 import { Talk, Rules } from './TalkRules.jsx'
 import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
@@ -82,7 +83,7 @@ function elasticLayout(blocks, nowM, availH) {
 
 const fmtGap = (m) => `${m >= 60 ? Math.floor(m / 60) + 'H ' : ''}${m % 60 ? (m % 60) + 'M' : ''}`.trim()
 
-const domainCode = (domain) => `var(--m-${domain || 'reward'}, var(--_m-graph))`
+const domainCode = (domain) => `var(--m-${domain || 'reward'}, var(--_p-graph))`
 
 function Room({ b, top, height }) {
   const cls = ['room', b.status, b.fixed ? 'fixed' : '', height < 44 ? 'slim' : ''].join(' ')

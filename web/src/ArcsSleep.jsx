@@ -2,14 +2,6 @@ import { useEffect, useState } from 'react'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
 
-const MOCK_ARCS = {
-  masters: { days: 168, goals: [{ title: 'A* paper — ablation study to NeurIPS', due_date: '2026-11-01', status: 'active' }],
-    pipeline: [{ title: 'DAAD scholarship application', due_date: '2026-10-15' }, { title: 'Shortlist 5 programs', due_date: '2026-08-24' }] },
-  paper: { hours_30d: 14.5, hours_7d: 3.5 },
-  startup: { ships_30d: 16, ships_7d: 4, spark: [{ date: '2026-08-11', n: 1 }, { date: '2026-08-13', n: 2 }, { date: '2026-08-15', n: 1 }, { date: '2026-08-16', n: 2 }] },
-  trading: { sessions_total: 42, sessions_7d: 5, hours_30d: 21 },
-}
-
 const MOCK_SLEEP = {
   logs: [
     { date: '2026-08-17', hours: 5.7, debt_after: -2.1 },
@@ -26,57 +18,6 @@ const MOCK_SLEEP = {
   runs: [{ date: '2026-08-17', completed: true }, { date: '2026-08-16', completed: true }, { date: '2026-08-15', completed: false }],
   correlation: { with: 3.4, without: 1.6 },
   usual: { sleep: '00:30', wake: '07:45' },
-}
-
-export function Arcs({ demo }) {
-  const [d, setD] = useState(demo ? MOCK_ARCS : null)
-  useEffect(() => {
-    if (demo) return
-    fetch(`${API}/api/arcs`).then((r) => r.json()).then(setD).catch(() => {})
-  }, [])
-  if (!d) return <div className="loading">loading the long game…</div>
-  return (
-    <div className="page-wrap wide">
-      <p className="page-voice">The long game — four arcs, one direction.</p>
-      <div className="arcs-grid">
-        <div className="arc-card" style={{ '--c': '#3F6B52' }}>
-          <div className="arc-head"><span className="arc-name">Masters</span>
-            {d.masters.days != null
-              ? <span className="arc-big mono">{d.masters.days}<span className="u">days</span></span>
-              : <span className="dim2 mono">run /onboard to set the clock</span>}
-          </div>
-          {d.masters.pipeline.map((p, i) => (
-            <div key={i} className="arc-row"><span>{p.title}</span><span className="mono dim2">{p.due_date}</span></div>
-          ))}
-          {!d.masters.pipeline.length && <div className="lst-empty">pipeline empty — "remind me X by date" adds to it</div>}
-        </div>
-        <div className="arc-card" style={{ '--c': '#4A7A5F' }}>
-          <div className="arc-head"><span className="arc-name">A* paper</span>
-            <span className="arc-big mono">{d.paper.hours_30d}<span className="u">h/30d</span></span></div>
-          <div className="arc-row"><span>this week</span><span className="mono">{d.paper.hours_7d}h deep work</span></div>
-          {d.masters.goals.map((g, i) => (
-            <div key={i} className="arc-row"><span>{g.title}</span><span className="mono dim2">{g.due_date || ''}</span></div>
-          ))}
-        </div>
-        <div className="arc-card" style={{ '--c': '#97744E' }}>
-          <div className="arc-head"><span className="arc-name">Startup</span>
-            <span className="arc-big mono">{d.startup.ships_7d}<span className="u">ships/wk</span></span></div>
-          <div className="arc-row"><span>last 30 days</span><span className="mono">{d.startup.ships_30d} ship-steps</span></div>
-          <div className="arc-spark">
-            {d.startup.spark.map((s) => (
-              <span key={s.date} title={`${s.date}: ${s.n}`} style={{ height: `${Math.min(s.n * 22, 66)}px` }} />
-            ))}
-          </div>
-        </div>
-        <div className="arc-card" style={{ '--c': '#486992' }}>
-          <div className="arc-head"><span className="arc-name">Trading</span>
-            <span className="arc-big mono">{d.trading.sessions_total}<span className="u">sessions</span></span></div>
-          <div className="arc-row"><span>this week</span><span className="mono">{d.trading.sessions_7d} sessions</span></div>
-          <div className="arc-row"><span>last 30 days</span><span className="mono">{d.trading.hours_30d}h at the desk</span></div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export function Sleep({ demo }) {
