@@ -889,55 +889,84 @@ button, input, select, textarea { font-family: inherit; }
 }
 
 /* ============================================================
-   SHEET 07 · SLEEP & ENERGY — the hand-inked 24-hour dial and its
-   quiet companions. Tokens only; Day + Night print. See SleepDial.jsx.
+   SHEET 07 · SLEEP & ENERGY — a clean, concrete health tracker.
+   Big glanceable cards; crisp SVG (SleepViz.jsx). Tokens only;
+   Day + Night print. NO dial, NO hand-drawn wobble.
    ============================================================ */
 .slp-sheet { max-width: 1180px; margin: 0 auto; }
 .slp-err {
   color: var(--accent-text); border: 1px solid var(--accent);
   border-radius: var(--r-2); padding: var(--s-2) var(--s-3); margin-bottom: var(--s-4);
 }
-.slp-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: var(--s-7); align-items: start; }
-@media (max-width: 900px) { .slp-grid { grid-template-columns: 1fr; gap: var(--s-6); } }
 
-/* ---------- hero: the dial + the window controls ---------- */
-.slp-hero {
-  border: 1px solid var(--border);
-  border-radius: var(--r-3);
-  background: var(--surface);
-  padding: var(--s-5) var(--s-5) var(--s-4);
-  position: sticky; top: var(--s-4);
+/* ---------- responsive card grid ---------- */
+.slp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s-5); align-items: start; }
+.slp-hero, .slp-wide { grid-column: 1 / -1; }
+.slp-grid > .slp-block:not(.slp-wide) { grid-column: span 2; }
+@media (max-width: 900px) {
+  .slp-grid { grid-template-columns: 1fr; gap: var(--s-4); }
+  .slp-grid > * { grid-column: auto; }
 }
-@media (max-width: 900px) { .slp-hero { position: static; } }
-.slp-dial-wrap { width: 100%; }
-.slp-dial-svg { display: block; width: 100%; overflow: visible; }
 
-.slp-window {
-  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
-  margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--border);
-}
-.slp-window-h { color: var(--text-faint); }
-.slp-time { display: flex; align-items: center; gap: var(--s-2); }
-.slp-time .anno { color: var(--text-muted); }
-.slp-window-note { color: var(--text-faint); margin-left: auto; }
-
-/* ---------- the side column blocks ---------- */
-.slp-side { display: flex; flex-direction: column; gap: var(--s-5); }
-.slp-block {
+/* ---------- shared panel shell ---------- */
+.slp-hero, .slp-block {
   border: 1px solid var(--border); border-radius: var(--r-3);
   background: var(--surface); padding: var(--s-4) var(--s-5) var(--s-5);
 }
-.slp-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); }
-.slp-h .cap { font-size: var(--fs-ui); font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); }
+.slp-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); flex-wrap: wrap; }
+.slp-h .cap { font-size: var(--fs-anno); font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
 .slp-h-sub { color: var(--text-faint); }
 .slp-block-foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
 .slp-flash { color: var(--success); }
 
-.slp-ledger-wrap, .slp-payoff-wrap { width: 100%; }
-.slp-ledger-svg, .slp-payoff-svg { display: block; width: 100%; overflow: visible; }
+/* ---------- 1 · last night (hero) ---------- */
+.slp-hero-top { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.slp-big {
+  font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1; color: var(--text); font-variant-numeric: tabular-nums;
+}
+.slp-pill {
+  font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 650;
+  padding: var(--s-1) var(--s-3); border-radius: 999px; border: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.slp-pill.accent  { color: var(--accent-text); border-color: var(--accent);  background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.slp-pill.warning { color: var(--warning);     border-color: color-mix(in oklab, var(--warning) 55%, var(--border-strong)); background: color-mix(in oklab, var(--warning) 12%, transparent); }
+.slp-pill.success { color: var(--success);     border-color: color-mix(in oklab, var(--success) 55%, var(--border-strong)); background: color-mix(in oklab, var(--success) 12%, transparent); }
+.slp-pill.muted   { color: var(--text-muted);  border-color: var(--border-strong); background: var(--surface-raised); }
+.slp-hero-meta { display: flex; align-items: center; gap: var(--s-2) var(--s-4); flex-wrap: wrap; margin-top: var(--s-3); color: var(--text-muted); }
+.slp-debt.owed   { color: var(--accent-text); font-weight: 650; }
+.slp-debt.banked { color: var(--success); font-weight: 650; }
+.slp-hero-empty { color: var(--text-muted); font-size: var(--fs-body); margin: var(--s-2) 0 0; }
+
+/* ---------- 6 · usual window controls ---------- */
+.slp-window { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.slp-time { display: flex; align-items: center; gap: var(--s-2); }
+.slp-time .anno { color: var(--text-muted); }
+
+/* ---------- crisp chart surfaces (SleepViz.jsx) ---------- */
+.slp-viz { width: 100%; margin-top: var(--s-2); }
+.slp-svg { display: block; width: 100%; height: auto; }
+.slp-grid-line { stroke: var(--border); stroke-width: 1; }
+.slp-target { stroke: var(--accent); stroke-width: 1.4; opacity: 0.85; }
+.slp-target-lbl { fill: var(--accent-text); font-family: var(--font-anno); font-size: 10px; }
+.slp-tick-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 10px; }
+.slp-x-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 9px; }
+.slp-empty-svg { fill: var(--text-faint); font-family: var(--font-anno); font-size: 11px; }
+.slp-bar { fill: var(--text-muted); }
+.slp-bar.short { fill: var(--accent); }
+.slp-heat-cell { fill: var(--text); }
+.slp-heat-cell.peak { fill: var(--accent); stroke: var(--accent); stroke-width: 1.5; }
+.slp-peak-lbl { fill: var(--accent-text); font-family: var(--font-anno); font-size: 10px; font-weight: 650; }
+.slp-pay-bar.with { fill: var(--accent); }
+.slp-pay-bar.without { fill: var(--text-muted); }
+.slp-pay-val { font-family: var(--font-anno); font-size: 13px; font-weight: 700; }
+.slp-pay-val.with { fill: var(--accent-text); }
+.slp-pay-val.without { fill: var(--text); }
+.slp-pay-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 10px; }
 
 /* ---------- log-a-night form ---------- */
-.slp-logform { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-3); }
+.slp-logform { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--border); }
 .slp-log-lab { color: var(--text-muted); }
 
 /* ---------- wind-down checklist ---------- */
