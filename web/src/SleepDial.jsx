@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import rough from 'roughjs'
 import { arc as d3arc } from 'd3-shape'
 import { scaleLinear } from 'd3-scale'
-import { parseHM, windowHours, sharpness, peakHour, SLEEP_TARGET } from './sleepApi.js'
+import { parseHM, sharpness, peakHour, SLEEP_TARGET } from './sleepApi.js'
 
 // SHEET 07 · SLEEP — the hand-inked 24-hour dial and its two quiet companions
 // (the debt ledger strip, the payoff marks). Every stroke is rough.js so this
@@ -150,84 +150,75 @@ function drawDial(svg, rc, w, P, { usual, topology, debt }) {
     }
   }
 
-  // 3 · sleep window — an inked hachured band from sleep → wake (wraps midnight)
+  // 3 · sleep window — an inked hachured band from sleep → wake (wraps midnight).
+  // No label on it: the band IS the window, and the times sit in the controls below.
   const sH = parseHM(usual?.sleep)
   const wH = parseHM(usual?.wake)
-  const dur = windowHours(usual?.sleep, usual?.wake)
   if (sH != null && wH != null) {
     const start = angleOf(sH)
     const end = angleOf(wH <= sH ? wH + 24 : wH)
     const path = d3arc()({
-      innerRadius: R * 0.70, outerRadius: R * 0.90,
+      innerRadius: R * 0.74, outerRadius: R * 0.92,
       startAngle: start, endAngle: end,
     })
     const g = document.createElementNS(NS, 'g')
     g.setAttribute('transform', `translate(${cx},${cy})`)
     svg.appendChild(g)
-    // heavier ink: a hachure fill plus a firm outline
     g.appendChild(rc.path(path, {
-      fill: P.ink, fillStyle: 'hachure', hachureGap: 5, fillWeight: 1.6,
+      fill: P.ink, fillStyle: 'hachure', hachureGap: 5, fillWeight: 1.5,
       stroke: P.ink, strokeWidth: 2, roughness: 1.25, seed: seed + 71,
     }))
-    // label just inside the band, on the paper ground, so it stays legible
-    const midH = (sH + (wH <= sH ? wH + 24 : wH)) / 2
-    const [lx, ly] = ptAt(cx, cy, midH % 24, R * 0.63)
-    const lbl = dur != null ? `asleep · ${dur}h` : 'asleep'
-    txt(svg, lx, ly, lbl, { fill: P.inkMut, size: 10.5, weight: 600 })
   }
 
-  // 4 · energy spokes — length = sharpness, peak in red
+  // 4 · energy spokes — hang INWARD from the rim so the centre stays clear.
+  // length = sharpness that hour, peak spoke in red.
   const maxSharp = Math.max(1, ...(topology || []).map(sharpness))
   const peak = peakHour(topology)
-  const Rbase = R * 0.60
-  const lenScale = scaleLinear().domain([0, maxSharp]).range([0, R * 0.42])
+  const rimIn = R * 0.94
+  const lenScale = scaleLinear().domain([0, maxSharp]).range([0, R * 0.34])
   const byHour = new Map((topology || []).map((t) => [t.hour, t]))
   for (let h = 0; h < 24; h++) {
     const t = byHour.get(h)
     const s = t ? sharpness(t) : 0
     if (!t || s <= 0) {
-      // no / dead data → faint stub only
-      const [ax, ay] = ptAt(cx, cy, h, Rbase)
-      const [bx, by] = ptAt(cx, cy, h, Rbase - 5)
+      const [ax, ay] = ptAt(cx, cy, h, rimIn)
+      const [bx, by] = ptAt(cx, cy, h, rimIn - 5)
       svg.appendChild(rc.line(ax, ay, bx, by, { stroke: P.line, strokeWidth: 1, roughness: 1.1, seed: seed + 300 + h }))
       continue
     }
     const len = lenScale(s)
-    const [ax, ay] = ptAt(cx, cy, h, Rbase)
-    const [bx, by] = ptAt(cx, cy, h, Rbase - len)
+    const [ax, ay] = ptAt(cx, cy, h, rimIn)
+    const [bx, by] = ptAt(cx, cy, h, rimIn - len)
     const isPeak = peak && peak.hour === h
     svg.appendChild(rc.line(ax, ay, bx, by, {
       stroke: isPeak ? P.red : P.inkMut, strokeWidth: isPeak ? 3 : 2.1,
       roughness: 1.2, seed: seed + 400 + h,
     }))
-    svg.appendChild(rc.circle(bx, by, isPeak ? 6 : 3.4, {
+    svg.appendChild(rc.circle(bx, by, isPeak ? 5 : 3, {
       stroke: isPeak ? P.red : P.inkMut, strokeWidth: isPeak ? 2.4 : 1.4,
       fill: isPeak ? P.red : undefined, fillStyle: 'solid', roughness: 1.1, seed: seed + 500 + h,
     }))
-    if (isPeak) {
-      const [px, py] = ptAt(cx, cy, h, Rbase - len - 14)
-      txt(svg, px, py, `peak ${String(h).padStart(2, '0')}:00`, { fill: P.red, size: 10, weight: 600, letter: '0.04em' })
-    }
+  }
+  // peak label — outside the rim by the peak spoke, never near the centre
+  if (peak) {
+    const [px, py] = ptAt(cx, cy, peak.hour, R + 28)
+    txt(svg, px, py, `peak ${String(peak.hour).padStart(2, '0')}:00`,
+      { fill: P.red, size: 10, weight: 600, letter: '0.04em' })
   }
 
-  // 5 · centre stack — debt + window summary
+  // 5 · centre — the debt, alone and legible
   if (debt != null) {
     const owed = debt < 0
     const mag = Math.abs(debt).toFixed(1)
-    txt(svg, cx, cy - 12, `${owed ? '−' : '+'}${mag}h`, {
-      fill: owed ? P.red : P.ink, size: 30, weight: 700, mono: true,
+    txt(svg, cx, cy - 7, `${owed ? '−' : '+'}${mag}h`, {
+      fill: owed ? P.red : P.ink, size: 32, weight: 700, mono: true,
     })
-    txt(svg, cx, cy + 12, owed ? 'sleep owed' : 'banked', {
-      fill: owed ? P.red : P.inkMut, size: 11, letter: '0.08em',
+    txt(svg, cx, cy + 18, owed ? 'sleep owed' : 'banked', {
+      fill: owed ? P.red : P.inkMut, size: 10.5, letter: '0.10em',
     })
   } else {
     txt(svg, cx, cy - 4, 'log a night', { fill: P.inkFaint, size: 13, mono: false })
-    txt(svg, cx, cy + 14, 'to start the ledger', { fill: P.inkFaint, size: 10 })
-  }
-  if (dur != null) {
-    txt(svg, cx, cy + 32, `${usual.sleep} → ${usual.wake} · ${dur}h`, { fill: P.inkFaint, size: 10.5 })
-  } else {
-    txt(svg, cx, cy + 32, 'no window set', { fill: P.inkFaint, size: 10.5 })
+    txt(svg, cx, cy + 16, 'to start the ledger', { fill: P.inkFaint, size: 10 })
   }
 
   if (!topology || !topology.length) {

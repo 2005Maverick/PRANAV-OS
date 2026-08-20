@@ -902,9 +902,9 @@ button, input, select, textarea { font-family: inherit; }
 
 /* ---------- hero: the dial + the window controls ---------- */
 .slp-hero {
-  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border: 1px solid var(--border);
   border-radius: var(--r-3);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, var(--surface)), var(--surface));
+  background: var(--surface);
   padding: var(--s-5) var(--s-5) var(--s-4);
   position: sticky; top: var(--s-4);
 }
