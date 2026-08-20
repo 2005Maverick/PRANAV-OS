@@ -63,6 +63,7 @@
   --fs-anno: 13px;      /* mono annotations & captions only */
   --fs-ui: 14px;        /* interface floor */
   --fs-body: 16px;
+  --fs-read: 18px;      /* long-form note reading — a step above UI body */
   --fs-lg: 19px;
   --fs-xl: 23px;
   --fs-2xl: 28px;
@@ -1053,7 +1054,7 @@ button, input, select, textarea { font-family: inherit; }
 }
 .lb-line:hover .lb-plus { opacity: 1; }
 .lb-plus:hover { background: var(--surface-raised); color: var(--text); }
-.lb-p { font-size: var(--fs-body); line-height: 1.72; color: var(--text); margin-bottom: var(--s-4); }
+.lb-p { font-size: var(--fs-read); line-height: 1.75; color: var(--text); margin-bottom: var(--s-4); }
 .lb-link {
   color: var(--accent-text); font-weight: 500;
   border-bottom: 1px solid color-mix(in oklab, var(--accent) 45%, transparent);
@@ -1181,19 +1182,19 @@ button, input, select, textarea { font-family: inherit; }
 .lb-doc-body .lb-pm { outline: none; }
 .lb-pm > * + * { margin-top: 0; }
 .lb-pm p {
-  font-size: var(--fs-body); line-height: 1.72; color: var(--text); margin-bottom: var(--s-4);
+  font-size: var(--fs-read); line-height: 1.75; color: var(--text); margin-bottom: var(--s-4);
 }
 .lb-pm h1 {
   font-size: var(--fs-2xl); font-weight: 650; letter-spacing: -0.01em;
   line-height: 1.15; margin: var(--s-5) 0 var(--s-4);
 }
 .lb-pm h2 {
-  font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.005em;
+  font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.005em;
   margin: var(--s-6) 0 var(--s-3);
 }
-.lb-pm h3 { font-size: var(--fs-body); font-weight: 650; margin: var(--s-5) 0 var(--s-2); }
+.lb-pm h3 { font-size: var(--fs-lg); font-weight: 650; margin: var(--s-5) 0 var(--s-2); }
 .lb-pm ul, .lb-pm ol { margin: 0 0 var(--s-4); padding-left: var(--s-5); }
-.lb-pm li { font-size: var(--fs-body); line-height: 1.72; color: var(--text); }
+.lb-pm li { font-size: var(--fs-read); line-height: 1.75; color: var(--text); }
 .lb-pm ul[data-type="taskList"] { list-style: none; padding-left: 0; margin-bottom: var(--s-5); }
 .lb-pm ul[data-type="taskList"] li {
   display: flex; align-items: flex-start; gap: var(--s-3); padding: var(--s-1) 0;
