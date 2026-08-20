@@ -85,7 +85,6 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
   const MAP_INK = resolve('var(--map-ink)', '#e6e6e6')
   const MAP_FAINT = resolve('var(--map-faint)', '#8a8f98')
   const MAP_LINE = resolve('var(--map-line)', '#555')
-  const MAP_BG = resolve('var(--map-bg)', '#161616')
   const ACCENT = resolve('var(--accent)', '#c0392b')
 
   const highlight = hoverId != null
@@ -98,41 +97,35 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
   }
 
   const drawNode = (n, ctx, scale) => {
+    const focused = n.id === hoverId
     const on = !highlight || highlight.has(n.id)
-    const r = 3 + Math.sqrt(n.val) * 2.2
-    ctx.globalAlpha = on ? 1 : 0.22
+    const r = 3 + Math.sqrt(n.val) * 1.7
     const col = tagColor(n.tag)
-    // glow
-    ctx.shadowColor = col
-    ctx.shadowBlur = on ? (n.id === hoverId ? 18 : 9) : 0
-    ctx.beginPath()
-    ctx.arc(n.x, n.y, r, 0, 2 * Math.PI)
-    ctx.fillStyle = col
-    ctx.fill()
-    ctx.shadowBlur = 0
-    // lit highlight for depth
-    ctx.beginPath()
-    ctx.arc(n.x - r * 0.28, n.y - r * 0.28, r * 0.42, 0, 2 * Math.PI)
-    ctx.fillStyle = 'rgba(255,255,255,0.22)'
-    ctx.fill()
-    // "you are here" ring
+    // faint fill disc — restrained, no gloss
+    ctx.globalAlpha = on ? (focused ? 0.5 : 0.24) : 0.09
+    ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, 2 * Math.PI)
+    ctx.fillStyle = col; ctx.fill()
+    // crisp outline ring
+    ctx.globalAlpha = on ? 1 : 0.16
+    ctx.lineWidth = (focused ? 2 : 1.35) / scale
+    ctx.strokeStyle = col; ctx.stroke()
+    // ring on the note you're in
     if (n.id === currentId) {
-      ctx.beginPath()
-      ctx.arc(n.x, n.y, r + 3.5, 0, 2 * Math.PI)
-      ctx.strokeStyle = ACCENT
-      ctx.lineWidth = 1.6 / scale
-      ctx.stroke()
+      ctx.globalAlpha = 1
+      ctx.beginPath(); ctx.arc(n.x, n.y, r + 3.4, 0, 2 * Math.PI)
+      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.3 / scale; ctx.stroke()
     }
-    // label — declutter: only hubs / zoomed-in / the focused cluster / current
+    // label — mono, decluttered to hubs / focus cluster / zoom / current
     const showLabel = highlight ? highlight.has(n.id)
-      : (scale > 1.15 || n.val >= 3 || n.id === currentId)
+      : (scale > 1.2 || n.val >= 3 || n.id === currentId)
     if (showLabel) {
-      const fs = Math.max(11 / scale, 3)
-      ctx.font = `500 ${fs}px "Archivo Variable", Archivo, sans-serif`
+      const fs = Math.max(10 / scale, 2.5)
+      ctx.font = `500 ${fs}px "IBM Plex Mono", ui-monospace, monospace`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
+      ctx.globalAlpha = on ? 1 : 0.45
       ctx.fillStyle = on ? MAP_INK : MAP_FAINT
-      ctx.fillText(n.title, n.x, n.y + r + 2)
+      ctx.fillText(n.title, n.x, n.y + r + 4)
     }
     ctx.globalAlpha = 1
   }
@@ -157,14 +150,14 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
       <div className="mv-panel lb-graph-panel" onClick={(e) => e.stopPropagation()}>
         <div className="mv-head">
           <span className="mv-title">The map</span>
-          <span className="dd-meta anno">{counts || 'every note, every thread'} · hover to trace · click to open</span>
+          <span className="dd-meta anno">{counts || 'every note, every thread'}</span>
           <button className="mv-close" onClick={onClose} aria-label="Close">×</button>
         </div>
-        <div className="lb-graph-canvas" ref={boxRef} style={{ background: MAP_BG }}>
+        <div className="lb-graph-canvas" ref={boxRef}>
           {err ? (
             <p className="lb-graph-note anno">Couldn’t load the map — check the connection.</p>
           ) : !graph ? (
-            <p className="lb-graph-note anno">Drawing the threads…</p>
+            <p className="lb-graph-note anno">Loading the map…</p>
           ) : !data.nodes.length ? (
             <p className="lb-graph-note anno">The map fills in as your notes link to each other.</p>
           ) : (
@@ -173,30 +166,27 @@ export default function GraphModal({ api, onClose, onOpenNote, currentId }) {
               graphData={data}
               width={size.w}
               height={size.h}
-              backgroundColor={MAP_BG}
+              backgroundColor="rgba(0,0,0,0)"
               autoPauseRedraw={false}
               cooldownTicks={90}
-              onEngineStop={() => fgRef.current && fgRef.current.zoomToFit(500, 36)}
+              onEngineStop={() => fgRef.current && fgRef.current.zoomToFit(500, 48)}
               nodeVal={(n) => n.val}
               nodeCanvasObjectMode={() => 'replace'}
               nodeCanvasObject={drawNode}
               nodePointerAreaPaint={hitPaint}
               onNodeHover={onHover}
               onNodeClick={(n) => onOpenNote(n.id)}
-              linkCurvature={0.12}
+              linkCurvature={0.08}
               linkColor={(l) => {
                 const inc = linkOn(l)
                 if (inc === null) return MAP_LINE
                 return inc ? ACCENT : MAP_LINE
               }}
-              linkWidth={(l) => (linkOn(l) ? 1.8 : 0.7)}
-              linkDirectionalParticles={(l) => (linkOn(l) ? 3 : 0)}
-              linkDirectionalParticleWidth={2}
-              linkDirectionalParticleColor={() => ACCENT}
+              linkWidth={(l) => (linkOn(l) ? 1.4 : 0.6)}
             />
           )}
         </div>
-        <div className="lb-graph-foot anno">Drag a point to pull the web · scroll to zoom · the red ring is the note you’re in</div>
+        <div className="lb-graph-foot anno">Drag to reposition · scroll to zoom · the ring marks the open note</div>
       </div>
     </div>
   )

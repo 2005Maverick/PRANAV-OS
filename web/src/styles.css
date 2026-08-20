@@ -57,10 +57,11 @@
   --m-uni: var(--_p-graph);
   --m-reward: var(--_p-felt);
   /* the map — a dark drafting table so linked notes glow */
-  --map-bg: oklch(0.23 0.02 260);
+  --map-bg: oklch(0.22 0.02 260);
   --map-ink: oklch(0.90 0.008 90);
   --map-faint: oklch(0.62 0.010 260);
-  --map-line: oklch(0.55 0.012 260);
+  --map-line: oklch(0.45 0.012 260);
+  --map-grid: oklch(0.28 0.015 260);
 
   /* ---------- 3 · type / space / radius / shadow / motion ---------- */
   --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -134,7 +135,8 @@
   --map-bg: oklch(0.09 0 0);
   --map-ink: oklch(0.92 0.006 90);
   --map-faint: oklch(0.60 0.006 90);
-  --map-line: oklch(0.42 0 0);
+  --map-line: oklch(0.38 0 0);
+  --map-grid: oklch(0.16 0 0);
   --e-1: 0 1px 2px oklch(0 0 0 / 0.7);
   --e-2: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5);
   --e-3: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5), 0 12px 32px oklch(0 0 0 / 0.45);
@@ -1162,11 +1164,14 @@ button, input, select, textarea { font-family: inherit; }
   border: 1px solid color-mix(in oklab, var(--c) 30%, transparent);
 }
 .lb-graph-btn { width: 100%; margin-top: var(--s-2); }
-.lb-graph-panel { max-width: 960px; width: min(960px, 94vw); }
+.lb-graph-panel { max-width: 1360px; width: 96vw; }
 .lb-graph-note { color: var(--map-faint); line-height: 1.6; padding: var(--s-4); }
 .lb-graph-canvas {
-  height: min(66vh, 620px); border: 1px solid var(--border);
-  border-radius: var(--r-3); overflow: hidden; background: var(--map-bg);
+  height: 74vh; border: 1px solid var(--border);
+  border-radius: var(--r-3); overflow: hidden;
+  background-color: var(--map-bg);
+  background-image: radial-gradient(var(--map-grid) 1px, transparent 1.4px);
+  background-size: 26px 26px;
   display: grid; place-items: center; cursor: grab;
 }
 .lb-graph-canvas:active { cursor: grabbing; }
