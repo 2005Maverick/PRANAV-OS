@@ -293,7 +293,7 @@ export default function Library({ demo }) {
 
       {showGraph && (
         <Suspense fallback={null}>
-          <GraphModal api={api} onClose={() => setShowGraph(false)}
+          <GraphModal api={api} currentId={note?.id} onClose={() => setShowGraph(false)}
             onOpenNote={(id) => { setShowGraph(false); setOpenId(id) }} />
         </Suspense>
       )}

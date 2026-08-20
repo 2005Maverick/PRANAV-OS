@@ -56,6 +56,11 @@
   --m-gym: var(--_p-violet);
   --m-uni: var(--_p-graph);
   --m-reward: var(--_p-felt);
+  /* the map — a dark drafting table so linked notes glow */
+  --map-bg: oklch(0.23 0.02 260);
+  --map-ink: oklch(0.90 0.008 90);
+  --map-faint: oklch(0.62 0.010 260);
+  --map-line: oklch(0.55 0.012 260);
 
   /* ---------- 3 · type / space / radius / shadow / motion ---------- */
   --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -126,6 +131,10 @@
   --m-gym: oklch(0.68 0.100 300);
   --m-uni: oklch(0.68 0.014 260);
   --m-felt: oklch(0.68 0.045 170);
+  --map-bg: oklch(0.09 0 0);
+  --map-ink: oklch(0.92 0.006 90);
+  --map-faint: oklch(0.60 0.006 90);
+  --map-line: oklch(0.42 0 0);
   --e-1: 0 1px 2px oklch(0 0 0 / 0.7);
   --e-2: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5);
   --e-3: 0 1px 2px oklch(0 0 0 / 0.7), 0 4px 12px oklch(0 0 0 / 0.5), 0 12px 32px oklch(0 0 0 / 0.45);
@@ -1153,12 +1162,17 @@ button, input, select, textarea { font-family: inherit; }
   border: 1px solid color-mix(in oklab, var(--c) 30%, transparent);
 }
 .lb-graph-btn { width: 100%; margin-top: var(--s-2); }
-.lb-graph-panel { max-width: 720px; width: min(720px, 92vw); }
-.lb-graph-note { color: var(--text-muted); line-height: 1.6; padding: var(--s-4); }
+.lb-graph-panel { max-width: 960px; width: min(960px, 94vw); }
+.lb-graph-note { color: var(--map-faint); line-height: 1.6; padding: var(--s-4); }
 .lb-graph-canvas {
-  height: min(60vh, 480px); border: 1px solid var(--border);
-  border-radius: var(--r-2); overflow: hidden; background: var(--surface);
-  display: grid; place-items: center;
+  height: min(66vh, 620px); border: 1px solid var(--border);
+  border-radius: var(--r-3); overflow: hidden; background: var(--map-bg);
+  display: grid; place-items: center; cursor: grab;
+}
+.lb-graph-canvas:active { cursor: grabbing; }
+.lb-graph-foot {
+  color: var(--text-faint); text-align: center;
+  margin-top: var(--s-3); letter-spacing: 0.02em;
 }
 
 /* ---- functional additions (engine wired; REDLINE look unchanged) ---- */
