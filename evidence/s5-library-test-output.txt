@@ -1,0 +1,34 @@
+SHEET 05 · LIBRARY — full build + validation (2026-08-20)
+
+WHAT SHIPPED (the vault, made real; REDLINE look approved by Pranav):
+- Backend: notes + note_links tables, self-migrating on boot via
+  notes_svc.ensure_schema() (Neon has no migration runner). Portable markdown
+  storage; tsvector GIN full-text search; [[wikilink]] parse->note_links on
+  every save; backlinks + related + graph resolved by title (rename-safe).
+  API: GET/POST/PUT/DELETE /api/library/note(s), /pin, /graph, /daily.
+  Bot: "note: ..." now creates a real vault note (capture.py).
+- Frontend: TipTap v3 editor (StarterKit + TaskList + Link + Placeholder +
+  Markdown), always-on formatting toolbar (text size + all blocks), slash menu,
+  [[ / @ ]] wikilink autocomplete, bubble toolbar. Shelf (search, new, daily,
+  pinned/this-week, collapsible). Connections rail (mentioned-in, related,
+  editable tags, collapsible). Delete + pin actions. Graph "map" (Obsidian-style
+  small grey nodes on black, hub sizing, hover-focus, capped zoom, you-are-here
+  ring). Wikilinks render as red chips (ProseMirror decoration; markdown stays
+  literal) and click-to-open the linked note. Larger 18px reading size.
+  Works fully offline in ?demo (in-memory store mirrors backend link logic).
+
+VALIDATION:
+- Backend unit tests (server/tests/test_notes_svc.py): 7 passed — _parse_links
+  (extract, case-insensitive dedupe, trim, no single-brackets, no newline-span)
+  and _excerpt (unwrap wikilinks, strip markdown, collapse+truncate, empty).
+  Command: `python -m pytest tests/ -q` -> 7 passed.
+- Regex hardening found by tests: _LINK_RE now excludes newlines (matches the
+  frontend), so a [[link]] cannot span lines.
+- Frontend `npm run build` -> green (only the expected editor chunk-size note).
+- Vite transform check: Editor.jsx, Library.jsx, GraphModal.jsx, libApi.js all
+  serve 200 with no transform errors.
+- Backend syntax: notes_svc.py / api.py / capture.py / web.py / main.py parse OK.
+
+NOT COVERED (honest): DB-backed CRUD is not integration-tested here (no local
+Postgres; Neon is remote and the live API needs Pranav's cockpit key). The demo
+path exercises the same link/backlink/related logic client-side.

@@ -1256,6 +1256,13 @@ button, input, select, textarea { font-family: inherit; }
   content: attr(data-placeholder); color: var(--text-faint);
   float: left; height: 0; pointer-events: none;
 }
+/* [[wikilink]] chips — the title reads as a link, the brackets recede */
+.lb-wikichip {
+  color: var(--accent-text); font-weight: 600; cursor: pointer;
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+}
+.lb-wikichip:hover { border-bottom-color: var(--accent); }
+.lb-wikibr { color: var(--text-faint); opacity: 0.6; }
 
 /* bubble toolbar buttons (reuse the .lb-bb look, now real buttons) */
 button.lb-bb {

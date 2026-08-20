@@ -225,7 +225,13 @@ export default function Library({ demo }) {
             </div>
             <input className="lb-h1 lb-title" value={note.title} onChange={onTitle}
               placeholder="Untitled" aria-label="Note title" />
-            <Editor key={note.id} note={note} allNotes={graphNotes} onChange={onBody} />
+            <Editor key={note.id} note={note} allNotes={graphNotes} onChange={onBody}
+              onOpenLink={(title) => {
+                const t = title.toLowerCase()
+                const hit = notes.find((n) => n.title.toLowerCase() === t)
+                if (hit) setOpenId(hit.id)
+                else setErr(`No note titled “${title}” yet — type it to create one.`)
+              }} />
           </div>
         ) : (
           <div className="lb-doc lb-doc-empty">

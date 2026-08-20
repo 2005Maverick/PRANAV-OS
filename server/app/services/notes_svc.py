@@ -9,7 +9,7 @@ import re
 
 from .. import db
 
-_LINK_RE = re.compile(r"\[\[([^\[\]]{1,120})\]\]")
+_LINK_RE = re.compile(r"\[\[([^\[\]\n]{1,120})\]\]")
 
 
 async def ensure_schema() -> None:

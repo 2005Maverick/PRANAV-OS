@@ -9,7 +9,7 @@
     {"id": "S2-week", "description": "SHEET 02 Week in REDLINE", "verify": ["lanes, coded panels, hatch=fixed only, redline today, move dialog, ghost skeleton; Pranav approval"], "passes": true, "evidence": "evidence/s2-week-test-output.txt — verified both prints; Pranav: 'perfect' (after one separation round)"},
     {"id": "S3-wall", "description": "SHEET 03 Wall in REDLINE + day-tile PNG restyled to sheet", "verify": ["after S2"], "passes": false},
     {"id": "S4-review", "description": "SHEET 04 Review as the issue room (world-consistent light 'print check' variant)", "verify": ["after S3"], "passes": false},
-    {"id": "S5-library", "description": "SHEET 05 Library", "verify": ["queued"], "passes": false},
+    {"id": "S5-library", "description": "SHEET 05 Library — the Obsidian-grade vault, made real (TipTap markdown editor, [[wikilinks]] as chips + click-to-open, backlinks/related, tags, FTS search, pins, daily notes, Obsidian-style graph map, bot capture), REDLINE look approved", "verify": ["build green", "backend unit tests pass", "vite transform check", "demo offline"], "passes": true, "evidence": "evidence/s5-library-test-output.txt: 7/7 backend unit tests pass; npm build green; all modules transform; notes+note_links self-migrating; wikilink chip render + click; Pranav approved look after map/toolbar/reading-size rounds"},
     {"id": "S6-arcs", "description": "SHEET 06 Arcs", "verify": ["queued"], "passes": false},
     {"id": "S7-sleep", "description": "SHEET 07 Sleep & Energy", "verify": ["queued"], "passes": false},
     {"id": "S8-talk", "description": "SHEET 08 Talk", "verify": ["queued"], "passes": false},

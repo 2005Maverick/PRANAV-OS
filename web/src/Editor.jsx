@@ -1,12 +1,56 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
+import { Extension } from '@tiptap/core'
+import { Plugin } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import StarterKit from '@tiptap/starter-kit'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import { Markdown } from 'tiptap-markdown'
+
+// Render literal [[Title]] as a red chip (brackets recede) without touching the
+// stored markdown — pure decoration. Clicking a chip opens that note.
+function makeWikiChips(openLinkRef) {
+  const RE = /\[\[([^[\]\n]{1,120})\]\]/g
+  return Extension.create({
+    name: 'wikiChips',
+    addProseMirrorPlugins() {
+      return [new Plugin({
+        props: {
+          decorations(state) {
+            const decos = []
+            state.doc.descendants((node, pos) => {
+              if (!node.isText || !node.text) return
+              const text = node.text
+              RE.lastIndex = 0
+              let m
+              while ((m = RE.exec(text))) {
+                const from = pos + m.index
+                const to = from + m[0].length
+                decos.push(Decoration.inline(from, from + 2, { class: 'lb-wikibr' }))
+                decos.push(Decoration.inline(from + 2, to - 2,
+                  { class: 'lb-wikichip', 'data-title': m[1].trim() }))
+                decos.push(Decoration.inline(to - 2, to, { class: 'lb-wikibr' }))
+              }
+            })
+            return DecorationSet.create(state.doc, decos)
+          },
+          handleClick(view, pos, event) {
+            const el = event.target
+            if (el && el.classList && el.classList.contains('lb-wikichip')) {
+              const title = el.getAttribute('data-title')
+              if (title && openLinkRef.current) { openLinkRef.current(title); return true }
+            }
+            return false
+          },
+        },
+      })]
+    },
+  })
+}
 
 // Slash-menu block types. Each `run` receives a live chain and returns it.
 const SLASH_ITEMS = [
@@ -41,9 +85,12 @@ function filterNotes(allNotes, query) {
  * The rich-text surface. Loads FROM `body_md`, serialises back TO markdown,
  * and hosts the bubble toolbar, slash menu, and [[wikilink]] autocomplete.
  */
-export default function Editor({ note, allNotes, onChange }) {
+export default function Editor({ note, allNotes, onChange, onOpenLink }) {
   const [menu, setMenu] = useState(null) // { type, trigger?, query, items, index, coords }
   const editorRef = useRef(null)
+  const openLinkRef = useRef(null)
+  openLinkRef.current = onOpenLink
+  const wikiExt = useMemo(() => makeWikiChips(openLinkRef), [])
   const ctxRef = useRef({})
   const notesRef = useRef(allNotes)
   notesRef.current = allNotes
@@ -126,6 +173,7 @@ export default function Editor({ note, allNotes, onChange }) {
       TaskItem.configure({ nested: true }),
       Placeholder.configure({ placeholder: 'Start writing…' }),
       Markdown.configure({ html: false, transformPastedText: true, transformCopiedText: true }),
+      wikiExt,
     ],
     content: note ? note.body_md : '',
     editorProps: { attributes: { class: 'lb-pm', spellcheck: 'true' }, handleKeyDown },
