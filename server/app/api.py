@@ -426,6 +426,27 @@ async def sleep_protocol(body: ProtocolIn):
     return {"ok": True}
 
 
+class SleepLogIn(BaseModel):
+    hours: float
+    date: str | None = None
+
+
+@router.post("/sleep/log")
+async def sleep_log(body: SleepLogIn):
+    d = dt.date.fromisoformat(body.date) if body.date else None
+    return await sleep_svc.log_night(body.hours, d)
+
+
+class ProtocolRunIn(BaseModel):
+    done: int
+    total: int
+
+
+@router.post("/sleep/run")
+async def sleep_run(body: ProtocolRunIn):
+    return await sleep_svc.record_protocol_run(body.done, body.total)
+
+
 @router.get("/library")
 async def library(section: str | None = None, q: str | None = None):
     where, args = ["1=1"], []

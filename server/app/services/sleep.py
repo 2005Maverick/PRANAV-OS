@@ -56,6 +56,40 @@ async def on_wake() -> dict | None:
     return {"hours": hours, "debt": debt, "close": close.strftime("%H:%M"), "note": note}
 
 
+async def log_night(hours: float, date: dt.date | None = None) -> dict:
+    """Manual entry from the cockpit — upsert the night and recompute rolling debt."""
+    date = date or _now().date()
+    target = await _target_hours()
+    exists = await db.fetchrow("SELECT 1 FROM sleep_logs WHERE date=$1", date)
+    if exists:
+        await db.execute("UPDATE sleep_logs SET hours=$2 WHERE date=$1", date, hours)
+    else:
+        await db.execute("INSERT INTO sleep_logs (date, hours) VALUES ($1,$2)", date, hours)
+    week = await db.fetch(
+        "SELECT hours FROM sleep_logs WHERE date >= $1 AND date <= $2 AND hours IS NOT NULL",
+        date - dt.timedelta(days=6), date)
+    debt = sum(target - float(r["hours"]) for r in week)
+    debt = max(min(round(-debt, 2), 3.0), -6.0)  # negative = owed sleep
+    await db.execute("UPDATE sleep_logs SET debt_after=$2 WHERE date=$1", date, debt)
+    return {"hours": hours, "debt": debt}
+
+
+async def record_protocol_run(done: int, total: int) -> dict:
+    """Tonight's wind-down tally from the cockpit checklist."""
+    date = _now().date()
+    completed = total > 0 and done >= total
+    exists = await db.fetchrow("SELECT 1 FROM protocol_runs WHERE date=$1", date)
+    if exists:
+        await db.execute(
+            "UPDATE protocol_runs SET steps_done=$2, steps_total=$3, completed=$4 WHERE date=$1",
+            date, done, total, completed)
+    else:
+        await db.execute(
+            "INSERT INTO protocol_runs (date, steps_done, steps_total, completed) VALUES ($1,$2,$3,$4)",
+            date, done, total, completed)
+    return {"completed": completed, "done": done, "total": total}
+
+
 async def status() -> dict | None:
     """Live numbers for the rail."""
     row = await db.fetchrow(
