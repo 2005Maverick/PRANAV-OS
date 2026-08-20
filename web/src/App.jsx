@@ -329,11 +329,11 @@ function Works({ rail, today }) {
 
 /* ---------- title block ---------- */
 const SHEETS = [
-  ['today', '01', 'Today'], ['week', '02', 'Week'], ['wall', '03', 'The Wall'], ['review', '04', 'Review'],
+  ['today', '01', 'Today'], ['week', '02', 'Week'], ['review', '03', 'Review'],
 ]
 const INDEX = [
-  ['library', '05', 'Library'], ['arcs', '06', 'Arcs'], ['sleep', '07', 'Sleep'], ['talk', '08', 'Talk'],
-  ['lists', '09', 'Lists'], ['finance', '10', 'Money'], ['vault', '11', 'Vault'], ['rules', '12', 'Rules'],
+  ['wall', '04', 'The Wall'], ['library', '05', 'Library'], ['arcs', '06', 'Arcs'], ['sleep', '07', 'Sleep'],
+  ['talk', '08', 'Talk'], ['lists', '09', 'Lists'], ['finance', '10', 'Money'], ['vault', '11', 'Vault'], ['rules', '12', 'Rules'],
 ]
 
 function TitleBlock({ view, setView, today, onArm, arming, theme, onTheme }) {

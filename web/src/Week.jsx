@@ -85,7 +85,7 @@ function sharedElastic(days, colTarget) {
 
 function WeekPlane({ b, yOf, onMove }) {
   const top = yOf(b.s)
-  const height = Math.max(yOf(b.e) - top - 3, 18)
+  const height = Math.max(yOf(b.e) - top - 3, 24)
   const w = 100 / b.laneCount
   const cls = ['wplane', b.status, b.fixed ? 'fixed' : ''].join(' ')
   return (
@@ -97,8 +97,8 @@ function WeekPlane({ b, yOf, onMove }) {
         width: `calc(${w}% - 8px)`,
         cursor: !b.fixed && b.status === 'planned' ? 'pointer' : 'default',
       }}>
-      {height >= 18 && <span className="wt">{b.title}</span>}
-      {height >= 40 && <span className="wtime">{b.start}–{b.end}</span>}
+      {height >= 24 && <span className="wt">{b.title}</span>}
+      {height >= 44 && <span className="wtime">{b.start}–{b.end}</span>}
     </div>
   )
 }

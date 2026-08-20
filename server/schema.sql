@@ -353,3 +353,31 @@ INSERT INTO domains (slug, name, color, floor_type, floor_target, floor_window_d
 ('tech',      'Tech Learning','#A5822B', 'sessions_per_window', 5,  7,  35,  6),
 ('gym',       'Gym / Health', '#6E4A72', 'ramp',                7,  7,  NULL,7);
 
+
+-- ============================================================
+-- Library vault — full markdown notes with [[wikilinks]]
+-- (created idempotently on boot by notes_svc.ensure_schema; kept
+--  here as the canonical record)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS notes (
+    id         BIGSERIAL PRIMARY KEY,
+    title      TEXT NOT NULL DEFAULT 'Untitled',
+    body_md    TEXT NOT NULL DEFAULT '',
+    tags       TEXT[] NOT NULL DEFAULT '{}',
+    pinned     BOOLEAN NOT NULL DEFAULT FALSE,
+    is_daily   BOOLEAN NOT NULL DEFAULT FALSE,
+    daily_date DATE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    search     tsvector GENERATED ALWAYS AS (
+        to_tsvector('english', coalesce(title,'') || ' ' || coalesce(body_md,''))
+    ) STORED
+);
+CREATE TABLE IF NOT EXISTS note_links (
+    source_id    BIGINT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    target_title TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS notes_search_idx ON notes USING GIN (search);
+CREATE INDEX IF NOT EXISTS notes_updated_idx ON notes (updated_at DESC);
+CREATE INDEX IF NOT EXISTS note_links_src_idx ON note_links (source_id);
+CREATE INDEX IF NOT EXISTS note_links_tgt_idx ON note_links (lower(target_title));

@@ -1,97 +1,261 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Editor from './Editor.jsx'
+import { createLibApi } from './libApi.js'
 
-const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
+// The map pulls in the (heavy) force-graph engine — load it only when opened.
+const GraphModal = lazy(() => import('./GraphModal.jsx'))
 
-const SECTIONS = ['all', 'note', 'idea', 'prompt', 'reading', 'reel', 'file', 'meeting']
+// SHEET 05 · LIBRARY — the vault, made real. The REDLINE look is unchanged;
+// the writing engine (TipTap → markdown), the shelf, the connections rail and
+// the map are wired to the library API (or an in-memory store in ?demo).
 
-const MOCK_LIB = {
-  counts: { note: 4, idea: 3, prompt: 2, reading: 5, reel: 1, meeting: 2 },
-  items: [
-    { id: 1, section: 'idea', title: 'Newsletter audio version', body: 'auto-generate weekly audio with the pipeline', idea_status: 'raw', created: '2026-08-14', surfaced_ct: 0, resurface_at: null },
-    { id: 2, section: 'reading', title: 'RL fine-tuning thread', url: 'https://x.com/example', est_minutes: 8, created: '2026-08-17', surfaced_ct: 0, resurface_at: null },
-    { id: 3, section: 'prompt', title: 'OSINT extraction prompt', body: 'You are an intelligence analyst. Extract entities…', created: '2026-08-12', surfaced_ct: 1, resurface_at: null },
-    { id: 4, section: 'note', title: 'Tile cache bug fixed', body: 'push tomorrow after the demo', created: '2026-08-17', surfaced_ct: 0, resurface_at: null },
-    { id: 5, section: 'meeting', title: 'Meeting — Telangana sync', body: '[17:02] client wants heat map filter…', created: '2026-08-16', surfaced_ct: 0, resurface_at: null },
-  ],
+const AUTOSAVE_MS = 800
+const SEARCH_MS = 300
+
+function NoteRow({ n, active, onOpen }) {
+  return (
+    <button className={`lb-row ${active ? 'on' : ''}`} onClick={() => onOpen(n.id)}
+      style={{ '--c': `var(--m-${n.tag}, var(--_p-graph))` }}>
+      <span className="lb-row-dot" aria-hidden="true" />
+      <span className="lb-row-main">
+        <span className="lb-row-title">{n.title}</span>
+        <span className="lb-row-ex">{n.excerpt || 'Empty note'}</span>
+      </span>
+      <span className="lb-row-meta anno">{n.updated}</span>
+    </button>
+  )
 }
 
 export default function Library({ demo }) {
-  const [data, setData] = useState(demo ? MOCK_LIB : null)
-  const [section, setSection] = useState('all')
+  const api = useMemo(() => createLibApi(demo), [demo])
+
+  const [notes, setNotes] = useState([])
+  const [openId, setOpenId] = useState(null)
+  const [note, setNote] = useState(null)      // full open note
   const [q, setQ] = useState('')
-  const [flash, setFlash] = useState(null)
+  const [showGraph, setShowGraph] = useState(false)
+  const [save, setSave] = useState('idle')    // idle | saving | saved
+  const [err, setErr] = useState(null)
+  const [tagDraft, setTagDraft] = useState('')
 
-  const load = () => {
-    if (demo) return
-    const p = new URLSearchParams()
-    if (section !== 'all') p.set('section', section)
-    if (q) p.set('q', q)
-    fetch(`${API}/api/library?${p}`).then((r) => r.json()).then(setData).catch(() => {})
+  const saveTimer = useRef(null)
+  const pending = useRef({})
+
+  /* ---------- list (search) ---------- */
+  const loadList = useCallback(async (query, keepOpen) => {
+    try {
+      const d = await api.listNotes(query)
+      const list = d.notes || []
+      setNotes(list)
+      setErr(null)
+      if (!keepOpen && !openId && list.length) setOpenId(list[0].id)
+      return list
+    } catch {
+      setErr('Could not load your notes.')
+      return []
+    }
+  }, [api, openId])
+
+  useEffect(() => {
+    const t = setTimeout(() => { loadList(q, true) }, SEARCH_MS)
+    return () => clearTimeout(t)
+  }, [q]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { loadList('', false) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---------- open a note ---------- */
+  useEffect(() => {
+    if (!openId) { setNote(null); return }
+    let live = true
+    api.getNote(openId)
+      .then((n) => { if (live) { setNote(n); setSave('idle'); setErr(null) } })
+      .catch(() => { if (live) setErr('Could not open that note.') })
+    return () => { live = false }
+  }, [openId, api])
+
+  /* ---------- autosave (debounced PUT of whatever changed) ---------- */
+  const scheduleSave = useCallback((patch) => {
+    if (!openId) return
+    pending.current = { ...pending.current, ...patch }
+    setSave('saving')
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      const body = pending.current
+      pending.current = {}
+      try {
+        await api.updateNote(openId, body)
+        setSave('saved')
+        // reflect title/tag/excerpt changes back into the shelf without a full reload
+        setNotes((prev) => prev.map((n) => (n.id === openId
+          ? { ...n, ...(body.title != null ? { title: body.title } : {}),
+              ...(body.tags != null ? { tags: body.tags, tag: body.tags[0] || 'uni' } : {}) }
+          : n)))
+      } catch {
+        setSave('idle')
+        setErr('Changes are not saving — check the connection.')
+      }
+    }, AUTOSAVE_MS)
+  }, [api, openId])
+
+  const onBody = useCallback((md) => {
+    setNote((n) => (n ? { ...n, body_md: md } : n))
+    scheduleSave({ body_md: md })
+  }, [scheduleSave])
+
+  const onTitle = (e) => {
+    const title = e.target.value
+    setNote((n) => (n ? { ...n, title } : n))
+    scheduleSave({ title })
   }
-  useEffect(load, [section, q])
 
-  if (!data) return <div className="loading">opening the library…</div>
-
-  const items = demo
-    ? data.items.filter((i) => (section === 'all' || i.section === section) &&
-        (!q || (i.title + (i.body || '')).toLowerCase().includes(q.toLowerCase())))
-    : data.items
-
-  const resurface = async (id, days) => {
-    if (demo) { setFlash('Will come back (demo)'); setTimeout(() => setFlash(null), 2000); return }
-    await fetch(`${API}/api/library/resurface`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, days }),
-    }).catch(() => {})
-    setFlash(`Coming back in ${days}d`)
-    setTimeout(() => setFlash(null), 2500)
-    load()
+  /* ---------- shelf actions ---------- */
+  const newNote = async () => {
+    try {
+      const { id } = await api.createNote({ title: 'Untitled', body_md: '', tags: [] })
+      await loadList('', true)
+      setQ('')
+      setOpenId(id)
+    } catch { setErr('Could not create a note.') }
   }
 
-  const copy = (text) => {
-    navigator.clipboard?.writeText(text)
-    setFlash('Copied')
-    setTimeout(() => setFlash(null), 1500)
+  const openDaily = async () => {
+    try {
+      const { id } = await api.daily()
+      await loadList('', true)
+      setOpenId(id)
+    } catch { setErr('Could not open today’s daily note.') }
   }
+
+  const togglePin = async () => {
+    if (!note) return
+    const pinned = !note.pinned
+    setNote({ ...note, pinned })
+    setNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, pinned } : n)))
+    try { await api.pinNote(note.id, pinned) } catch { setErr('Could not pin the note.') }
+  }
+
+  /* ---------- tags ---------- */
+  const setTags = (tags) => {
+    setNote((n) => (n ? { ...n, tags } : n))
+    scheduleSave({ tags })
+  }
+  const addTag = (e) => {
+    e.preventDefault()
+    const t = tagDraft.trim().toLowerCase()
+    if (!t || !note || note.tags.includes(t)) { setTagDraft(''); return }
+    setTags([...note.tags, t])
+    setTagDraft('')
+  }
+  const removeTag = (t) => { if (note) setTags(note.tags.filter((x) => x !== t)) }
+
+  const graphNotes = useMemo(
+    () => notes.map((n) => ({ id: n.id, title: n.title, tag: n.tag })),
+    [notes])
+
+  const pinned = notes.filter((n) => n.pinned)
+  const rest = notes.filter((n) => !n.pinned)
+  const crumb = note ? `${note.tags[0] || 'note'} · ${(note.title || '').toLowerCase().replace(/\s+/g, '-').slice(0, 24)}` : ''
 
   return (
-    <div className="page-wrap wide">
-      <div className="lib-bar">
-        <div className="lib-tabs">
-          {SECTIONS.map((s) => (
-            <button key={s} className={`wf-chip ${section === s ? 'on' : ''}`}
-              onClick={() => setSection(s)}>
-              {s}{s !== 'all' && data.counts?.[s] ? ` ${data.counts[s]}` : ''}
-            </button>
-          ))}
+    <div className="lb">
+      {/* ---- left: the shelf ---- */}
+      <aside className="lb-shelf">
+        <div className="lb-search">
+          <span className="lb-search-i anno" aria-hidden="true">⌕</span>
+          <input className="lb-search-in" placeholder="Search the library…"
+            value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search notes" />
         </div>
-        <input className="lib-search" placeholder="search everything…"
-          value={q} onChange={(e) => setQ(e.target.value)} />
-        {flash && <span className="rc-hint mono" style={{ color: 'var(--acid)' }}>{flash}</span>}
-      </div>
-      <div className="lib-grid">
-        {items.map((i) => (
-          <div key={i.id} className="lib-card">
-            <div className="lib-head">
-              <span className="wf-chip on lib-sec">{i.section}</span>
-              <span className="mono dim2">{i.created}</span>
-              {i.idea_status && <span className="mono dim2">· {i.idea_status}</span>}
-              {i.resurface_at && <span className="mono lib-back">↩ returns</span>}
+        <button className="btn btn-primary lb-new" onClick={newNote}>＋ New note</button>
+        <button className="btn lb-daily" onClick={openDaily}>◴ Daily note</button>
+
+        {err && <p className="lb-inline-err anno" role="alert">{err}</p>}
+
+        {pinned.length > 0 && (
+          <>
+            <div className="lb-group cap">Pinned</div>
+            {pinned.map((n) => <NoteRow key={n.id} n={n} active={n.id === openId} onOpen={setOpenId} />)}
+          </>
+        )}
+        <div className="lb-group cap">This week</div>
+        {rest.map((n) => <NoteRow key={n.id} n={n} active={n.id === openId} onOpen={setOpenId} />)}
+        {!notes.length && <p className="lb-empty anno">{q ? `No note matches “${q}”.` : 'No notes yet — start one.'}</p>}
+      </aside>
+
+      {/* ---- middle: the page ---- */}
+      <section className="lb-page">
+        {note ? (
+          <div className="lb-doc">
+            <div className="lb-doc-head">
+              <span className="lb-crumb anno">{crumb}</span>
+              <span className="lb-doc-meta anno">
+                {save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved ✓' : `Edited ${note.updated || ''}`}
+              </span>
             </div>
-            <div className="lib-title">{i.title}</div>
-            {i.body && <div className="lib-body">{i.body.slice(0, 220)}{i.body.length > 220 ? '…' : ''}</div>}
-            {i.url && <a className="lib-url mono" href={i.url} target="_blank" rel="noreferrer">{i.url.slice(0, 60)}</a>}
-            <div className="lib-actions">
-              {i.section === 'prompt' && i.body && (
-                <button className="rv-btn dark-btn" onClick={() => copy(i.body)}>copy</button>
-              )}
-              <button className="rv-btn dark-btn" onClick={() => resurface(i.id, 1)}>back tomorrow</button>
-              <button className="rv-btn dark-btn" onClick={() => resurface(i.id, 7)}>back in a week</button>
-            </div>
+            <input className="lb-h1 lb-title" value={note.title} onChange={onTitle}
+              placeholder="Untitled" aria-label="Note title" />
+            <Editor key={note.id} note={note} allNotes={graphNotes} onChange={onBody} />
           </div>
-        ))}
-        {!items.length && <p className="page-voice">Nothing here yet — send anything to the bot.</p>}
-      </div>
+        ) : (
+          <div className="lb-doc lb-doc-empty">
+            <p className="lb-empty anno">{err || 'Select a note, or start a new one.'}</p>
+          </div>
+        )}
+      </section>
+
+      {/* ---- right: the connections ---- */}
+      <aside className="lb-links">
+        {note && (
+          <>
+            <button className="btn lb-pin" onClick={togglePin}>
+              {note.pinned ? '★ Pinned' : '☆ Pin this note'}
+            </button>
+            <div className="lb-links-sec">
+              <div className="lb-group cap">Mentioned in</div>
+              {(note.mentioned_in || []).map((m) => (
+                <button key={m.id} className="lb-conn" onClick={() => setOpenId(m.id)}>
+                  <span className="lb-conn-title">{m.title}</span>
+                  <span className="lb-conn-where anno">{m.where}</span>
+                </button>
+              ))}
+              {!(note.mentioned_in || []).length && <p className="lb-empty anno">No backlinks yet.</p>}
+            </div>
+            <div className="lb-links-sec">
+              <div className="lb-group cap">Related</div>
+              {(note.related || []).map((r) => (
+                <button key={r.id} className="lb-conn" onClick={() => setOpenId(r.id)}
+                  style={{ '--c': `var(--m-${r.tag}, var(--_p-graph))` }}>
+                  <span className="lb-conn-dot" aria-hidden="true" />
+                  <span className="lb-conn-title">{r.title}</span>
+                </button>
+              ))}
+              {!(note.related || []).length && <p className="lb-empty anno">Nothing related yet.</p>}
+            </div>
+            <div className="lb-links-sec">
+              <div className="lb-group cap">Tags</div>
+              <div className="lb-tags">
+                {note.tags.map((t) => (
+                  <button key={t} className="lb-tag lb-tag-x" style={{ '--c': `var(--m-${t}, var(--_p-graph))` }}
+                    onClick={() => removeTag(t)} title="Remove tag">{t} ×</button>
+                ))}
+              </div>
+              <form className="lb-tag-add" onSubmit={addTag}>
+                <input className="lb-tag-in" value={tagDraft} onChange={(e) => setTagDraft(e.target.value)}
+                  placeholder="add a tag…" aria-label="Add a tag" />
+              </form>
+            </div>
+          </>
+        )}
+        <button className="btn lb-graph-btn" onClick={() => setShowGraph(true)}>
+          ◍ Open the map
+        </button>
+      </aside>
+
+      {showGraph && (
+        <Suspense fallback={null}>
+          <GraphModal api={api} onClose={() => setShowGraph(false)}
+            onOpenNote={(id) => { setShowGraph(false); setOpenId(id) }} />
+        </Suspense>
+      )}
     </div>
   )
 }

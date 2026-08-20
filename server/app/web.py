@@ -33,6 +33,8 @@ ptb: Application | None = None
 async def lifespan(app: FastAPI):
     global ptb
     await db.init_pool()
+    from .services import notes_svc
+    await notes_svc.ensure_schema()
     ptb = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
     handlers.register(ptb)
     await ptb.initialize()

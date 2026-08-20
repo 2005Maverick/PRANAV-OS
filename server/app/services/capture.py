@@ -18,12 +18,23 @@ async def capture_text(raw: str, tg_file_id: str | None = None) -> str:
     lower = raw.lower().strip()
     section = None
     body = raw.strip()
+    explicit = False
 
     for prefix, sec in SECTION_PREFIXES.items():
         if lower.startswith(prefix):
             section = sec
             body = raw[len(prefix):].strip()
+            explicit = True
             break
+
+    # explicit "note:" → a real document in the Library vault (not the inbox)
+    if explicit and section == "note":
+        from . import notes_svc
+        first = body.split("\n", 1)
+        title = first[0].strip()[:120] or "Untitled"
+        rest = first[1].strip() if len(first) > 1 else ""
+        await notes_svc.create_note(title, rest, [])
+        return f"Saved to the Library → “{title}”. Open it in the cockpit to write more."
 
     if section is None and URL_RE.search(raw) and len(raw) < 600:
         section = "reading"

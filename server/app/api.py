@@ -462,6 +462,76 @@ async def library_resurface(body: ResurfaceIn):
     return {"ok": True}
 
 
+# ---------- Library vault (full markdown notes with [[wikilinks]]) ----------
+from .services import notes_svc  # noqa: E402
+
+
+@router.get("/library/notes")
+async def library_notes(q: str | None = None):
+    return await notes_svc.list_notes(q)
+
+
+@router.get("/library/graph")
+async def library_graph():
+    return await notes_svc.graph()
+
+
+@router.get("/library/note/{note_id}")
+async def library_note(note_id: int):
+    note = await notes_svc.get_note(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="note not found")
+    return note
+
+
+class NoteCreateIn(BaseModel):
+    title: str = "Untitled"
+    body_md: str = ""
+    tags: list[str] = []
+
+
+@router.post("/library/note")
+async def library_note_create(body: NoteCreateIn):
+    note_id = await notes_svc.create_note(body.title, body.body_md, body.tags)
+    return {"id": note_id}
+
+
+class NoteUpdateIn(BaseModel):
+    title: str | None = None
+    body_md: str | None = None
+    tags: list[str] | None = None
+
+
+@router.put("/library/note/{note_id}")
+async def library_note_update(note_id: int, body: NoteUpdateIn):
+    ok = await notes_svc.update_note(note_id, body.title, body.body_md, body.tags)
+    if not ok:
+        raise HTTPException(status_code=404, detail="note not found")
+    return {"ok": True}
+
+
+@router.delete("/library/note/{note_id}")
+async def library_note_delete(note_id: int):
+    ok = await notes_svc.delete_note(note_id)
+    return {"ok": ok}
+
+
+class PinIn(BaseModel):
+    pinned: bool
+
+
+@router.post("/library/note/{note_id}/pin")
+async def library_note_pin(note_id: int, body: PinIn):
+    ok = await notes_svc.set_pinned(note_id, body.pinned)
+    return {"ok": ok}
+
+
+@router.post("/library/daily")
+async def library_daily():
+    note_id = await notes_svc.daily_note(_now().date())
+    return {"id": note_id}
+
+
 @router.get("/lists")
 async def lists_get():
     rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")
