@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createSleepApi, windowHours } from './sleepApi.js'
-import { History, HeatStrip, PayoffBars } from './SleepViz.jsx'
+import { EnergyCurve, DebtSpark, History, PayoffBars, energySentence } from './SleepViz.jsx'
 
-// SHEET 07 · SLEEP & ENERGY — a clean, concrete health tracker. Big glanceable
-// cards: last night, sleep history, a focus heat-strip, the wind-down routine,
-// the payoff read, and the usual window. Crisp SVG (SleepViz.jsx), tokens only,
+// SHEET 07 · SLEEP & ENERGY — a full-width, product-grade morning surface.
+// The hero is a large smooth energy curve across the waking day with a live NOW
+// marker; below it, sleep debt (the driver), last night + history, the wind-down
+// routine, and the payoff read. Crisp SVG (SleepViz.jsx), REDLINE tokens only,
 // Day + Night print. Every mutation is optimistic then resyncs from the store;
 // a failure surfaces inline and never crashes the sheet.
 
 const todayIso = () => new Date().toISOString().slice(0, 10)
+const pad2 = (n) => String(n).padStart(2, '0')
 
 /* format decimal hours → "6h 30m" (or "7h") */
 function fmtHM(h) {
@@ -19,7 +21,6 @@ function fmtHM(h) {
   if (mins === 60) return `${whole + 1}h`
   return `${whole}h ${pad2(mins)}m`
 }
-const pad2 = (n) => String(n).padStart(2, '0')
 
 /* status pill from hours slept */
 function statusOf(h) {
@@ -28,6 +29,15 @@ function statusOf(h) {
   if (h < 7) return { label: 'Light', tone: 'warning' }
   if (h <= 8.5) return { label: 'Solid', tone: 'success' }
   return { label: 'Long', tone: 'muted' }
+}
+
+/* plain coaching line from the current debt figure */
+function debtCoach(debt) {
+  if (debt == null) return null
+  const owed = debt < 0 ? -debt : 0
+  if (owed > 3) return 'Deep debt — it’s capping your afternoon energy. Aim +1h tonight.'
+  if (owed >= 1.5) return 'Some debt — an earlier night clears it.'
+  return 'Debt’s under control. Hold the line.'
 }
 
 /* ============================= page ============================= */
@@ -71,28 +81,110 @@ export default function Sleep({ demo }) {
 
       {d && (
         <div className="slp-grid">
-          <LastNight logs={d.logs} usual={d.usual} run={run} api={api} />
-          <HistoryPanel logs={d.logs} />
-          <SharpPanel topology={d.topology} />
+          <Hero topology={d.topology} usual={d.usual} />
+          <DebtPanel logs={d.logs} usual={d.usual} run={run} api={api} />
+          <NightPanel logs={d.logs} run={run} api={api} />
           <Routine protocol={d.protocol} runs={d.runs} run={run} api={api} demo={demo} />
           <Payoff correlation={d.correlation} />
-          <WindowPanel usual={d.usual} run={run} api={api} />
         </div>
       )}
     </div>
   )
 }
 
-/* ============================= 1 · last night (hero) ============================= */
-function LastNight({ logs, usual, run, api }) {
+/* ============================= 1 · hero — your day's energy ============================= */
+function Hero({ topology, usual }) {
+  const sentence = energySentence(topology)
+  return (
+    <section className="slp-hero">
+      <div className="slp-hero-head">
+        <span className="cap slp-hero-title">Your day’s energy</span>
+        <p className="slp-hero-sentence">
+          {sentence || 'Your energy curve fills in as you log deep-work blocks through the day.'}
+        </p>
+      </div>
+      <EnergyCurve topology={topology} usual={usual} />
+    </section>
+  )
+}
+
+/* ============================= 2 · sleep debt (the driver) ============================= */
+function DebtPanel({ logs, usual, run, api }) {
+  const list = logs || []
+  const last = list.length ? list[0] : null
+  const debt = last ? last.debt_after : null
+  const owed = debt != null && debt < 0 ? Math.abs(debt) : 0
+  const banked = debt != null && debt > 0 ? debt : 0
+  const coach = debtCoach(debt)
+  const winH = windowHours(usual?.sleep, usual?.wake)
+
+  const bigText = debt == null ? '—' : owed > 0 ? `−${owed.toFixed(1)}h` : banked > 0 ? `+${banked.toFixed(1)}h` : '0h'
+  const tag = owed > 0 ? 'owed' : banked > 0 ? 'banked' : debt == null ? '' : 'level'
+
+  return (
+    <section className="slp-block slp-debt-panel">
+      <div className="slp-h">
+        <span className="cap">Sleep debt</span>
+        <span className="slp-h-sub anno">14-night trend</span>
+      </div>
+
+      <div className="slp-debt-num">
+        <span className={`slp-big${owed > 0 ? ' owed' : ''}`}>{bigText}</span>
+        {tag && <span className="anno slp-debt-tag">{tag}</span>}
+      </div>
+
+      <DebtSpark logs={logs} />
+
+      {coach && <p className="slp-takeaway">{coach}</p>}
+
+      <div className="slp-debt-window anno">
+        asleep {usual?.sleep || '--:--'} → {usual?.wake || '--:--'}{winH != null ? ` · ${winH}h` : ''}
+      </div>
+
+      <WindowControls usual={usual} run={run} api={api} />
+    </section>
+  )
+}
+
+/* usual-window time inputs, folded into the debt panel */
+function WindowControls({ usual, run, api }) {
+  const [sleep, setSleep] = useState(usual?.sleep || '')
+  const [wake, setWake] = useState(usual?.wake || '')
+
+  useEffect(() => { setSleep(usual?.sleep || ''); setWake(usual?.wake || '') }, [usual?.sleep, usual?.wake])
+
+  const saveSleep = () => {
+    if (sleep && sleep !== (usual?.sleep || '')) run(() => api.setWindow({ key: 'usual_sleep', value: sleep }))
+  }
+  const saveWake = () => {
+    if (wake && wake !== (usual?.wake || '')) run(() => api.setWindow({ key: 'usual_wake', value: wake }))
+  }
+
+  return (
+    <div className="slp-window">
+      <label className="slp-time">
+        <span className="anno">to bed</span>
+        <input className="rc-in slim" type="time" value={sleep}
+          onChange={(e) => setSleep(e.target.value)} onBlur={saveSleep} aria-label="Usual sleep time" />
+      </label>
+      <label className="slp-time">
+        <span className="anno">wake</span>
+        <input className="rc-in slim" type="time" value={wake}
+          onChange={(e) => setWake(e.target.value)} onBlur={saveWake} aria-label="Usual wake time" />
+      </label>
+    </div>
+  )
+}
+
+/* ============================= 3 · last night + history ============================= */
+function NightPanel({ logs, run, api }) {
   const [hours, setHours] = useState('')
   const list = logs || []
   const last = list.length ? list[0] : null
   const status = last ? statusOf(last.hours) : null
-  const debt = last ? last.debt_after : null
-
-  const winH = windowHours(usual?.sleep, usual?.wake)
-  const hasWindow = usual?.sleep && usual?.wake
+  const nights = list.slice(0, 14)
+  const n = nights.length
+  const avg = n ? nights.reduce((s, l) => s + (l.hours || 0), 0) / n : null
 
   const submit = async (e) => {
     e.preventDefault()
@@ -103,88 +195,37 @@ function LastNight({ logs, usual, run, api }) {
   }
 
   return (
-    <section className="slp-hero">
-      <div className="slp-h">
-        <span className="cap">Last night</span>
-        {last && <span className="slp-h-sub anno">logged {last.date}</span>}
-      </div>
-
-      {last ? (
-        <>
-          <div className="slp-hero-top">
-            <span className="slp-big">{fmtHM(last.hours)}</span>
+    <section className="slp-block slp-night-panel">
+      <div className="slp-night-top">
+        <div className="slp-night-stat">
+          <div className="slp-h slp-night-h">
+            <span className="cap">Last night</span>
+            {last && <span className="slp-h-sub anno">{last.date}</span>}
+          </div>
+          <div className="slp-night-figure">
+            <span className="slp-big">{last ? fmtHM(last.hours) : '—'}</span>
             {status && <span className={`slp-pill ${status.tone}`}>{status.label}</span>}
           </div>
-          <div className="slp-hero-meta">
-            {hasWindow && (
-              <span className="anno">
-                {usual.sleep} → {usual.wake}{winH != null ? ` · ${winH}h` : ''}
-              </span>
-            )}
-            {debt != null && (
-              <span className={`anno slp-debt ${debt < 0 ? 'owed' : 'banked'}`}>
-                {debt < 0 ? `−${Math.abs(debt).toFixed(1)}h owed` : debt > 0 ? `+${debt.toFixed(1)}h banked` : 'on target'}
-              </span>
-            )}
+          {!last && <p className="slp-hero-empty">Log last night to start.</p>}
+        </div>
+
+        <form className="slp-logform" onSubmit={submit}>
+          <label className="slp-log-lab anno" htmlFor="slp-hours">log last night</label>
+          <div className="slp-log-row">
+            <input id="slp-hours" className="rc-in slim" value={hours} inputMode="decimal"
+              onChange={(e) => setHours(e.target.value)} placeholder="6.5" aria-label="Hours slept last night" />
+            <button className="chip on" type="submit">save</button>
           </div>
-        </>
-      ) : (
-        <p className="slp-hero-empty">Log last night to start.</p>
-      )}
+        </form>
+      </div>
 
-      <form className="slp-logform" onSubmit={submit}>
-        <label className="slp-log-lab anno" htmlFor="slp-hours">log last night</label>
-        <input id="slp-hours" className="rc-in slim" value={hours} inputMode="decimal"
-          onChange={(e) => setHours(e.target.value)} placeholder="6.5" aria-label="Hours slept last night" />
-        <button className="chip on" type="submit">save</button>
-      </form>
-    </section>
-  )
-}
-
-/* ============================= 2 · sleep history ============================= */
-function HistoryPanel({ logs }) {
-  const nights = (logs || []).slice(0, 14)
-  const n = nights.length
-  const avg = n ? (nights.reduce((s, l) => s + (l.hours || 0), 0) / n) : null
-
-  return (
-    <section className="slp-block slp-wide">
-      <div className="slp-h">
-        <span className="cap">Sleep — last 14 nights</span>
+      <div className="slp-h slp-hist-h">
+        <span className="cap">Last 14 nights</span>
         {n > 0 && <span className="slp-h-sub anno">avg {avg.toFixed(1)}h · {n} nights</span>}
       </div>
       <History logs={logs} />
     </section>
   )
-}
-
-/* ============================= 3 · when you're sharp ============================= */
-function SharpPanel({ topology }) {
-  const has = (topology || []).length > 0
-  const peak = has ? sharpestHour(topology) : null
-
-  return (
-    <section className="slp-block slp-wide">
-      <div className="slp-h">
-        <span className="cap">When you're actually sharp</span>
-      </div>
-      <HeatStrip topology={topology} />
-      {peak != null && (
-        <p className="slp-takeaway anno">sharpest around {pad2(peak)}:00 — protect that block</p>
-      )}
-    </section>
-  )
-}
-
-// tiny local peak (avoids re-importing peakHour just for the hour number)
-function sharpestHour(topology) {
-  let best = null
-  for (const t of topology || []) {
-    const s = Math.max(0, (t.deep || 0) + (t.shallow || 0) * 0.35 - (t.failed || 0) * 0.8)
-    if (s > 0 && (!best || s > best.s)) best = { hour: t.hour, s }
-  }
-  return best ? best.hour : null
 }
 
 /* ============================= 4 · wind-down routine ============================= */
@@ -220,7 +261,7 @@ function Routine({ protocol, runs, run, api, demo }) {
   }
 
   return (
-    <section className="slp-block">
+    <section className="slp-block slp-routine">
       <div className="slp-h">
         <span className="cap">Wind-down routine</span>
         {!editing && (
@@ -266,7 +307,7 @@ function Routine({ protocol, runs, run, api, demo }) {
         </>
       ) : (
         <div className="slp-empty">
-          <p className="anno">No wind-down yet. A short fixed sequence before bed is what makes tomorrow's first block land.</p>
+          <p className="anno">No wind-down yet. A short fixed sequence before bed is what makes tomorrow’s first block land.</p>
           <button className="chip on" onClick={openEdit}>write the steps</button>
         </div>
       )}
@@ -281,7 +322,7 @@ function Payoff({ correlation }) {
   const ratio = has && c.without > 0 ? (c.with / c.without) : null
 
   return (
-    <section className="slp-block">
+    <section className="slp-block slp-payoff">
       <div className="slp-h"><span className="cap">Does the wind-down pay?</span></div>
       <PayoffBars withV={c.with ?? null} withoutV={c.without ?? null} />
       {has ? (
@@ -295,43 +336,6 @@ function Payoff({ correlation }) {
       ) : (
         <p className="slp-takeaway anno">Needs a couple of weeks of both kinds of nights before a verdict.</p>
       )}
-    </section>
-  )
-}
-
-/* ============================= 6 · usual window ============================= */
-function WindowPanel({ usual, run, api }) {
-  const [sleep, setSleep] = useState(usual?.sleep || '')
-  const [wake, setWake] = useState(usual?.wake || '')
-
-  useEffect(() => { setSleep(usual?.sleep || ''); setWake(usual?.wake || '') }, [usual?.sleep, usual?.wake])
-
-  const winH = windowHours(sleep, wake)
-  const saveSleep = () => {
-    if (sleep && sleep !== (usual?.sleep || '')) run(() => api.setWindow({ key: 'usual_sleep', value: sleep }))
-  }
-  const saveWake = () => {
-    if (wake && wake !== (usual?.wake || '')) run(() => api.setWindow({ key: 'usual_wake', value: wake }))
-  }
-
-  return (
-    <section className="slp-block">
-      <div className="slp-h">
-        <span className="cap">Usual window</span>
-        {winH != null && <span className="anno slp-h-sub">{winH}h in bed</span>}
-      </div>
-      <div className="slp-window">
-        <label className="slp-time">
-          <span className="anno">to bed</span>
-          <input className="rc-in slim" type="time" value={sleep}
-            onChange={(e) => setSleep(e.target.value)} onBlur={saveSleep} aria-label="Usual sleep time" />
-        </label>
-        <label className="slp-time">
-          <span className="anno">wake</span>
-          <input className="rc-in slim" type="time" value={wake}
-            onChange={(e) => setWake(e.target.value)} onBlur={saveWake} aria-label="Usual wake time" />
-        </label>
-      </div>
     </section>
   )
 }

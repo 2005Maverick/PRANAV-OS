@@ -893,16 +893,22 @@ button, input, select, textarea { font-family: inherit; }
    Big glanceable cards; crisp SVG (SleepViz.jsx). Tokens only;
    Day + Night print. NO dial, NO hand-drawn wobble.
    ============================================================ */
-.slp-sheet { max-width: 1180px; margin: 0 auto; }
+.slp-sheet { max-width: 1500px; margin: 0 auto; }
 .slp-err {
   color: var(--accent-text); border: 1px solid var(--accent);
   border-radius: var(--r-2); padding: var(--s-2) var(--s-3); margin-bottom: var(--s-4);
 }
 
-/* ---------- responsive card grid ---------- */
-.slp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s-5); align-items: start; }
-.slp-hero, .slp-wide { grid-column: 1 / -1; }
-.slp-grid > .slp-block:not(.slp-wide) { grid-column: span 2; }
+/* ---------- full-width dashboard grid ---------- */
+.slp-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s-5); align-items: start; }
+.slp-hero { grid-column: 1 / -1; }
+.slp-debt-panel { grid-column: span 5; }
+.slp-night-panel { grid-column: span 7; }
+.slp-routine { grid-column: span 7; }
+.slp-payoff { grid-column: span 5; }
+@media (max-width: 1080px) {
+  .slp-debt-panel, .slp-night-panel, .slp-routine, .slp-payoff { grid-column: 1 / -1; }
+}
 @media (max-width: 900px) {
   .slp-grid { grid-template-columns: 1fr; gap: var(--s-4); }
   .slp-grid > * { grid-column: auto; }
@@ -911,20 +917,54 @@ button, input, select, textarea { font-family: inherit; }
 /* ---------- shared panel shell ---------- */
 .slp-hero, .slp-block {
   border: 1px solid var(--border); border-radius: var(--r-3);
-  background: var(--surface); padding: var(--s-4) var(--s-5) var(--s-5);
+  background: var(--surface); padding: var(--s-5) var(--s-5) var(--s-5);
 }
 .slp-h { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-3); flex-wrap: wrap; }
 .slp-h .cap { font-size: var(--fs-anno); font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
 .slp-h-sub { color: var(--text-faint); }
 .slp-block-foot { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
 .slp-flash { color: var(--success); }
-
-/* ---------- 1 · last night (hero) ---------- */
-.slp-hero-top { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
 .slp-big {
   font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.02em;
   line-height: 1; color: var(--text); font-variant-numeric: tabular-nums;
 }
+.slp-big.owed { color: var(--accent-text); }
+
+/* ---------- 1 · hero — your day's energy ---------- */
+.slp-hero { padding: var(--s-5) var(--s-6) var(--s-6); }
+.slp-hero-head { display: flex; flex-direction: column; gap: var(--s-2); margin-bottom: var(--s-4); }
+.slp-hero-title { color: var(--text-faint); }
+.slp-hero-sentence { font-size: var(--fs-xl); color: var(--text); line-height: 1.35; max-width: 62ch; margin: 0; }
+.slp-hero-empty { color: var(--text-muted); font-size: var(--fs-body); margin: var(--s-2) 0 0; }
+
+/* energy curve (SleepViz · EnergyCurve) */
+.ec-baseline { stroke: var(--border); stroke-width: 1; }
+.ec-zone { fill: color-mix(in oklab, var(--accent) 8%, transparent); }
+.ec-area { fill: color-mix(in oklab, var(--accent) 13%, transparent); }
+.ec-line { fill: none; stroke: var(--text); stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; }
+.ec-now { stroke: var(--accent); stroke-width: 1.6; }
+.ec-now-pill { fill: var(--surface-raised); stroke: var(--accent); stroke-width: 1; }
+.ec-now-txt { fill: var(--accent-text); font-family: var(--font-anno); font-size: 11px; font-weight: 650; }
+.ec-peak-dot { fill: var(--accent); stroke: var(--surface); stroke-width: 1.5; }
+.ec-peak-lbl { fill: var(--accent-text); font-family: var(--font-anno); font-size: 11px; font-weight: 650; letter-spacing: 0.04em; }
+.ec-dip-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 10px; letter-spacing: 0.04em; }
+.ec-axis-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 10px; }
+
+/* ---------- 2 · sleep debt ---------- */
+.slp-debt-num { display: flex; align-items: baseline; gap: var(--s-3); margin-bottom: var(--s-2); }
+.slp-debt-tag { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+.slp-debt-window { color: var(--text-muted); margin-top: var(--s-3); }
+.slp-spark-wrap { margin-top: var(--s-1); }
+.slp-spark { fill: none; stroke: var(--text-muted); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.slp-spark-zero { stroke: var(--border); stroke-width: 1; }
+.slp-spark-dot { fill: var(--text-muted); }
+.slp-spark-dot.owed { fill: var(--accent); }
+
+/* ---------- 3 · last night + history ---------- */
+.slp-night-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; }
+.slp-night-h { margin-bottom: var(--s-2); }
+.slp-night-figure { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.slp-hist-h { margin-top: var(--s-5); }
 .slp-pill {
   font-family: var(--font-anno); font-size: var(--fs-anno); font-weight: 650;
   padding: var(--s-1) var(--s-3); border-radius: 999px; border: 1px solid var(--border-strong);
@@ -934,13 +974,14 @@ button, input, select, textarea { font-family: inherit; }
 .slp-pill.warning { color: var(--warning);     border-color: color-mix(in oklab, var(--warning) 55%, var(--border-strong)); background: color-mix(in oklab, var(--warning) 12%, transparent); }
 .slp-pill.success { color: var(--success);     border-color: color-mix(in oklab, var(--success) 55%, var(--border-strong)); background: color-mix(in oklab, var(--success) 12%, transparent); }
 .slp-pill.muted   { color: var(--text-muted);  border-color: var(--border-strong); background: var(--surface-raised); }
-.slp-hero-meta { display: flex; align-items: center; gap: var(--s-2) var(--s-4); flex-wrap: wrap; margin-top: var(--s-3); color: var(--text-muted); }
-.slp-debt.owed   { color: var(--accent-text); font-weight: 650; }
-.slp-debt.banked { color: var(--success); font-weight: 650; }
-.slp-hero-empty { color: var(--text-muted); font-size: var(--fs-body); margin: var(--s-2) 0 0; }
+
+/* log-a-night form */
+.slp-logform { display: flex; flex-direction: column; gap: var(--s-2); }
+.slp-log-lab { color: var(--text-muted); }
+.slp-log-row { display: flex; align-items: center; gap: var(--s-3); }
 
 /* ---------- 6 · usual window controls ---------- */
-.slp-window { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; }
+.slp-window { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--border); }
 .slp-time { display: flex; align-items: center; gap: var(--s-2); }
 .slp-time .anno { color: var(--text-muted); }
 
@@ -955,19 +996,12 @@ button, input, select, textarea { font-family: inherit; }
 .slp-empty-svg { fill: var(--text-faint); font-family: var(--font-anno); font-size: 11px; }
 .slp-bar { fill: var(--text-muted); }
 .slp-bar.short { fill: var(--accent); }
-.slp-heat-cell { fill: var(--text); }
-.slp-heat-cell.peak { fill: var(--accent); stroke: var(--accent); stroke-width: 1.5; }
-.slp-peak-lbl { fill: var(--accent-text); font-family: var(--font-anno); font-size: 10px; font-weight: 650; }
 .slp-pay-bar.with { fill: var(--accent); }
 .slp-pay-bar.without { fill: var(--text-muted); }
-.slp-pay-val { font-family: var(--font-anno); font-size: 13px; font-weight: 700; }
+.slp-pay-val { font-family: var(--font-anno); font-size: 14px; font-weight: 700; }
 .slp-pay-val.with { fill: var(--accent-text); }
 .slp-pay-val.without { fill: var(--text); }
 .slp-pay-lbl { fill: var(--text-faint); font-family: var(--font-anno); font-size: 10px; }
-
-/* ---------- log-a-night form ---------- */
-.slp-logform { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--border); }
-.slp-log-lab { color: var(--text-muted); }
 
 /* ---------- wind-down checklist ---------- */
 .slp-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -983,7 +1017,7 @@ button, input, select, textarea { font-family: inherit; }
   font-family: var(--font-anno); font-size: 12px; color: var(--accent-text);
 }
 .slp-step.on .slp-tick { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent); }
-.slp-step-text { flex: 1 1 auto; font-size: var(--fs-ui); }
+.slp-step-text { flex: 1 1 auto; font-size: var(--fs-body); }
 .slp-step.on .slp-step-text { color: var(--text-muted); }
 .slp-ess {
   flex: 0 0 auto; color: var(--accent-text);
@@ -1004,8 +1038,8 @@ button, input, select, textarea { font-family: inherit; }
 }
 .slp-proto:focus { border-color: var(--accent); }
 
-/* ---------- payoff takeaway ---------- */
-.slp-takeaway { font-size: var(--fs-ui); color: var(--text-muted); margin-top: var(--s-2); line-height: 1.5; }
+/* ---------- takeaway line ---------- */
+.slp-takeaway { font-size: var(--fs-ui); color: var(--text-muted); margin-top: var(--s-3); line-height: 1.5; }
 .slp-takeaway strong { color: var(--text); font-weight: 700; }
 
 /* shared: the "add / edit" text button (mirrors arcs) */
