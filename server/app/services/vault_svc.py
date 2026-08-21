@@ -65,6 +65,14 @@ async def add(password: str, label: str, pointer: str | None, secret: str | None
     return "ok"
 
 
+async def delete_entry(password: str, entry_id: int) -> str:
+    key = await _key_for(password)
+    if key is None:
+        return "wrong password"
+    await db.execute("DELETE FROM vault_entries WHERE id=$1", entry_id)
+    return "ok"
+
+
 async def unlock(password: str) -> list[dict] | None:
     key = await _key_for(password)
     if key is None:

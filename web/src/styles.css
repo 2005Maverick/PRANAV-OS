@@ -2259,3 +2259,72 @@ button.lb-bb {
   .mo-c-acct { grid-row: 3; grid-column: 2; text-align: right; }
   .mo-field-row { grid-template-columns: 1fr; }
 }
+
+
+/* ============================================================
+   SHEET 10 · VAULT — the safe. Locked drawer, ink on paper.
+   ============================================================ */
+.vlt { max-width: 820px; margin: 0 auto; padding: var(--s-6) var(--s-5) var(--s-8); }
+.vlt-loading { color: var(--text-faint); padding: var(--s-7); text-align: center; }
+.vlt-lead { font-size: var(--fs-body); color: var(--text-muted); line-height: 1.6; margin-bottom: var(--s-5); max-width: 62ch; }
+.vlt-flash { color: var(--accent-text); margin-bottom: var(--s-4); }
+
+.vlt-drawer {
+  max-width: 400px; margin: var(--s-7) auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-3);
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  display: flex; flex-direction: column; gap: var(--s-3); align-items: center; text-align: center;
+}
+.vlt-lock { color: var(--text-faint); margin-bottom: var(--s-1); }
+.vlt-drawer-title { font-size: var(--fs-lg); font-weight: 600; }
+.vlt-warn { color: var(--accent-text); }
+.vlt-field { width: 100%; text-align: center; }
+.vlt-primary { width: 100%; }
+
+.vlt-bar { display: flex; align-items: center; gap: var(--s-3); margin-bottom: var(--s-4); }
+.vlt-bar .cap { color: var(--text-faint); white-space: nowrap; }
+.vlt-search { flex: 1; }
+
+.vlt-list { display: flex; flex-direction: column; gap: var(--s-3); }
+.vlt-entry {
+  border: 1px solid var(--border); border-radius: var(--r-2);
+  background: var(--surface); padding: var(--s-3) var(--s-4);
+}
+.vlt-entry-head { display: flex; align-items: center; gap: var(--s-3); }
+.vlt-label { font-size: var(--fs-body); font-weight: 500; }
+.vlt-kind { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+.vlt-x {
+  margin-left: auto; background: none; border: none; color: var(--text-faint);
+  font-size: var(--fs-anno); font-family: var(--font-anno); cursor: pointer;
+}
+.vlt-x:hover { color: var(--danger); }
+.vlt-pointer { font-size: var(--fs-ui); color: var(--text-muted); margin-top: var(--s-1); }
+.vlt-pointer a { color: var(--accent-text); border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent); }
+.vlt-secret-row { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-2); }
+.vlt-secret {
+  font-size: var(--fs-ui); color: var(--text);
+  background: var(--surface-raised); border-radius: var(--r-1);
+  padding: 2px var(--s-2); letter-spacing: 0.06em;
+  overflow-x: auto; white-space: nowrap; max-width: 60%;
+}
+.vlt-mini {
+  background: none; border: 1px solid var(--border-strong); border-radius: var(--r-1);
+  font-size: var(--fs-anno); font-family: var(--font-anno); color: var(--text-muted);
+  padding: 1px var(--s-2); cursor: pointer;
+}
+.vlt-mini:hover { color: var(--text); border-color: var(--text-faint); }
+.vlt-empty { color: var(--text-faint); padding: var(--s-4); }
+
+.vlt-add {
+  margin-top: var(--s-6); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-3);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  display: flex; flex-direction: column; gap: var(--s-3);
+}
+.vlt-add-title { color: var(--text-faint); }
+.vlt-add-note { color: var(--text-faint); line-height: 1.5; }
+
+@media (max-width: 620px) {
+  .vlt-secret { max-width: 100%; }
+  .vlt-bar { flex-wrap: wrap; }
+}

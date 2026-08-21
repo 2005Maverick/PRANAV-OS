@@ -324,6 +324,16 @@ async def vault_unlock(body: VaultUnlockIn):
     return {"ok": True, "entries": entries}
 
 
+class VaultDeleteIn(BaseModel):
+    password: str
+    id: int
+
+
+@router.post("/vault/delete")
+async def vault_delete(body: VaultDeleteIn):
+    return {"reply": await vault_svc.delete_entry(body.password, body.id)}
+
+
 @router.get("/arcs")
 async def arcs():
     today_d = _now().date()
