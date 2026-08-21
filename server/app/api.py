@@ -673,6 +673,99 @@ async def arcs_add_contrib(arc_id: int, body: ContribIn):
     return {"id": cid}
 
 
+# ---------- Decks (a library of saved cards: prompt / note / link / image) ----------
+from fastapi import File, Form, Response, UploadFile  # noqa: E402
+from .services import decks_svc  # noqa: E402
+
+
+@router.get("/decks")
+async def decks_list():
+    return {"decks": await decks_svc.list_decks()}
+
+
+class DeckIn(BaseModel):
+    name: str = "Untitled deck"
+    domain: str | None = None
+
+
+@router.post("/decks")
+async def decks_create(body: DeckIn):
+    return {"id": await decks_svc.create_deck(body.name, body.domain)}
+
+
+@router.put("/decks/{deck_id}")
+async def decks_rename(deck_id: int, body: DeckIn):
+    return {"ok": await decks_svc.rename_deck(deck_id, body.name, body.domain)}
+
+
+@router.delete("/decks/{deck_id}")
+async def decks_delete(deck_id: int):
+    return {"ok": await decks_svc.delete_deck(deck_id)}
+
+
+@router.get("/decks/cards")
+async def decks_cards(deck_id: int | None = None, q: str | None = None):
+    return {"cards": await decks_svc.list_cards(deck_id, q)}
+
+
+@router.get("/decks/card/{card_id}")
+async def decks_card(card_id: int):
+    card = await decks_svc.get_card(card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="card not found")
+    return card
+
+
+class CardIn(BaseModel):
+    kind: str = "note"
+    title: str = ""
+    body: str = ""
+    url: str | None = None
+    tags: list[str] = []
+
+
+@router.post("/decks/{deck_id}/card")
+async def decks_add_card(deck_id: int, body: CardIn):
+    return {"id": await decks_svc.create_card(deck_id, body.kind, body.title, body.body, body.url, body.tags)}
+
+
+@router.post("/decks/{deck_id}/card/upload")
+async def decks_upload(deck_id: int, file: UploadFile = File(...), title: str = Form("")):
+    data = await file.read()
+    if len(data) > 6_000_000:
+        raise HTTPException(status_code=413, detail="image too large (6MB max)")
+    cid = await decks_svc.create_image_card(
+        deck_id, title or (file.filename or "image"), file.content_type or "image/*", data)
+    return {"id": cid}
+
+
+class CardUpdateIn(BaseModel):
+    deck_id: int | None = None
+    title: str | None = None
+    body: str | None = None
+    url: str | None = None
+    tags: list[str] | None = None
+
+
+@router.put("/decks/card/{card_id}")
+async def decks_update_card(card_id: int, body: CardUpdateIn):
+    return {"ok": await decks_svc.update_card(card_id, **body.model_dump(exclude_none=True))}
+
+
+@router.delete("/decks/card/{card_id}")
+async def decks_delete_card(card_id: int):
+    return {"ok": await decks_svc.delete_card(card_id)}
+
+
+@router.get("/decks/card/{card_id}/image")
+async def decks_card_image(card_id: int):
+    got = await decks_svc.card_image(card_id)
+    if not got:
+        raise HTTPException(status_code=404, detail="no image")
+    mime, data = got
+    return Response(content=data, media_type=mime)
+
+
 @router.get("/lists")
 async def lists_get():
     rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")

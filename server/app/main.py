@@ -14,9 +14,10 @@ log = logging.getLogger("main")
 
 async def post_init(app: Application):
     await db.init_pool()
-    from .services import notes_svc, arcs_svc
+    from .services import notes_svc, arcs_svc, decks_svc
     await notes_svc.ensure_schema()
     await arcs_svc.ensure_schema()
+    await decks_svc.ensure_schema()
     scheduler.start(app)
     log.info("Pranav OS up. Waiting for /start to claim ownership." )
 
