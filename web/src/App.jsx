@@ -7,7 +7,7 @@ import Library from './Library.jsx'
 import Arcs from './Arcs.jsx'
 import Sleep from './Sleep.jsx'
 import Vault from './Vault.jsx'
-import { Talk, Rules } from './TalkRules.jsx'
+import { Rules } from './TalkRules.jsx'
 import { MOCK_TODAY, MOCK_RAIL, mkWeek, mkWall } from './mocks.js'
 
 const API = import.meta.env.VITE_API || 'https://pranav-os.onrender.com'
@@ -334,7 +334,7 @@ const SHEETS = [
 ]
 const INDEX = [
   ['wall', '04', 'The Wall'], ['library', '05', 'Library'], ['arcs', '06', 'Arcs'], ['sleep', '07', 'Sleep'],
-  ['talk', '08', 'Talk'], ['lists', '09', 'Lists'], ['finance', '10', 'Money'], ['vault', '11', 'Vault'], ['rules', '12', 'Rules'],
+  ['lists', '08', 'Lists'], ['finance', '09', 'Money'], ['vault', '10', 'Vault'], ['rules', '11', 'Rules'],
 ]
 
 function TitleBlock({ view, setView, today, onArm, arming, theme, onTheme }) {
@@ -521,7 +521,6 @@ export default function App() {
         {view === 'arcs' && <Arcs demo={DEMO} />}
         {view === 'sleep' && <Sleep demo={DEMO} />}
         {view === 'vault' && <Vault demo={DEMO} />}
-        {view === 'talk' && <Talk demo={DEMO} />}
         {view === 'rules' && <Rules demo={DEMO} />}
       </div>
     </div>
