@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import Week from './Week.jsx'
 import Wall from './Wall.jsx'
 import Review from './Review.jsx'
-import { Lists, Finance } from './ListsFinance.jsx'
+import { Finance } from './ListsFinance.jsx'
+import Decks from './Decks.jsx'
 import Library from './Library.jsx'
 import Arcs from './Arcs.jsx'
 import Sleep from './Sleep.jsx'
@@ -515,7 +516,7 @@ export default function App() {
         {view === 'week' && (week ? <Week days={week} rail={rail} now={today.now} demo={DEMO} /> : <div className="sheet-empty"><span className="cap se-title">No week data yet</span></div>)}
         {view === 'wall' && (wall ? <Wall tiles={wall} /> : <div className="sheet-empty"><span className="cap se-title">The wall begins when your first day closes</span></div>)}
         {view === 'review' && <Review demo={DEMO} />}
-        {view === 'lists' && <Lists demo={DEMO} />}
+        {view === 'lists' && <Decks demo={DEMO} />}
         {view === 'finance' && <Finance demo={DEMO} />}
         {view === 'library' && <Library demo={DEMO} />}
         {view === 'arcs' && <Arcs demo={DEMO} />}
