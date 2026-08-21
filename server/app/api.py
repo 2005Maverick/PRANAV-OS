@@ -766,6 +766,155 @@ async def decks_card_image(card_id: int):
     return Response(content=data, media_type=mime)
 
 
+# ---------- Money (ledger: accounts, transactions, budgets, recurring, goals) ----------
+from .services import money_svc  # noqa: E402
+
+
+@router.get("/money")
+async def money_dashboard():
+    return await money_svc.dashboard()
+
+
+@router.get("/money/accounts")
+async def money_accounts():
+    return {"accounts": await money_svc.accounts()}
+
+
+class AccountIn(BaseModel):
+    name: str = "Account"
+    type: str = "bank"
+    opening: float = 0
+
+
+@router.post("/money/account")
+async def money_add_account(body: AccountIn):
+    return {"id": await money_svc.add_account(body.name, body.type, body.opening)}
+
+
+class AccountUpdateIn(BaseModel):
+    name: str | None = None
+    type: str | None = None
+    opening: float | None = None
+
+
+@router.put("/money/account/{account_id}")
+async def money_update_account(account_id: int, body: AccountUpdateIn):
+    return {"ok": await money_svc.update_account(account_id, body.name, body.type, body.opening)}
+
+
+@router.delete("/money/account/{account_id}")
+async def money_delete_account(account_id: int):
+    return {"ok": await money_svc.delete_account(account_id)}
+
+
+@router.get("/money/txns")
+async def money_txns(account_id: int | None = None, month: str | None = None, q: str | None = None):
+    return {"txns": await money_svc.txns(account_id, month, q)}
+
+
+class TxnIn(BaseModel):
+    account_id: int
+    kind: str = "expense"
+    amount: float
+    category: str | None = None
+    payee: str | None = None
+    note: str | None = None
+    date: str | None = None
+    transfer_account_id: int | None = None
+
+
+@router.post("/money/txn")
+async def money_add_txn(body: TxnIn):
+    tid = await money_svc.add_txn(body.account_id, body.kind, body.amount, body.category,
+                                  body.payee, body.note, body.date, body.transfer_account_id)
+    return {"id": tid}
+
+
+class TxnUpdateIn(BaseModel):
+    account_id: int | None = None
+    kind: str | None = None
+    amount: float | None = None
+    category: str | None = None
+    payee: str | None = None
+    note: str | None = None
+    date: str | None = None
+    transfer_account_id: int | None = None
+
+
+@router.put("/money/txn/{txn_id}")
+async def money_update_txn(txn_id: int, body: TxnUpdateIn):
+    return {"ok": await money_svc.update_txn(txn_id, **body.model_dump(exclude_none=True))}
+
+
+@router.delete("/money/txn/{txn_id}")
+async def money_delete_txn(txn_id: int):
+    return {"ok": await money_svc.delete_txn(txn_id)}
+
+
+@router.get("/money/budgets")
+async def money_budgets(month: str | None = None):
+    return {"budgets": await money_svc.budget_status(month)}
+
+
+class BudgetIn(BaseModel):
+    category: str
+    month: str
+    amount: float
+
+
+@router.post("/money/budget")
+async def money_set_budget(body: BudgetIn):
+    return {"ok": await money_svc.set_budget(body.category, body.month, body.amount)}
+
+
+@router.delete("/money/budget")
+async def money_delete_budget(category: str, month: str):
+    return {"ok": await money_svc.delete_budget(category, month)}
+
+
+@router.get("/money/recurring")
+async def money_recurring():
+    return {"recurring": await money_svc.recurring()}
+
+
+class RecurringIn(BaseModel):
+    name: str = "Bill"
+    kind: str = "expense"
+    amount: float
+    category: str | None = None
+    account_id: int | None = None
+    cadence: str = "monthly"
+    day_of_month: int | None = None
+    next_due: str | None = None
+
+
+@router.post("/money/recurring")
+async def money_add_recurring(body: RecurringIn):
+    rid = await money_svc.add_recurring(body.name, body.kind, body.amount, body.cadence,
+                                        body.category, body.account_id, body.day_of_month, body.next_due)
+    return {"id": rid}
+
+
+@router.delete("/money/recurring/{rec_id}")
+async def money_delete_recurring(rec_id: int):
+    return {"ok": await money_svc.delete_recurring(rec_id)}
+
+
+@router.post("/money/recurring/{rec_id}/post")
+async def money_post_recurring(rec_id: int):
+    return {"txn_id": await money_svc.post_recurring(rec_id)}
+
+
+@router.get("/money/forecast")
+async def money_forecast(days: int = 30):
+    return await money_svc.forecast(days)
+
+
+@router.get("/money/goals")
+async def money_goals():
+    return {"goals": await money_svc.goals()}
+
+
 @router.get("/lists")
 async def lists_get():
     rows = await db.fetch("SELECT id, name, fire_kind, fire_param, fire_rule FROM lists ORDER BY id")
