@@ -5,6 +5,7 @@ Routes:
   GET  /tick?key=...      external cron heartbeat: pings, briefs, evening close
   GET  /                  health (also the keep-alive target)
 """
+import asyncio
 import contextlib
 import logging
 import os
@@ -65,12 +66,19 @@ async def health():
     return {"ok": True, "service": "pranav-os"}
 
 
+_bg_tasks: set = set()
+
+
 @app.post("/webhook/{secret:path}")
 async def webhook(secret: str, request: Request):
     if secret != WEBHOOK_SECRET:
         return Response(status_code=403)
     data = await request.json()
-    await ptb.process_update(Update.de_json(data, ptb.bot))
+    # Ack Telegram immediately, process off the request path so a slow handler
+    # (e.g. an LLM call on a cold free-tier dyno) can't get cancelled mid-write.
+    task = asyncio.create_task(ptb.process_update(Update.de_json(data, ptb.bot)))
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
     return {"ok": True}
 
 

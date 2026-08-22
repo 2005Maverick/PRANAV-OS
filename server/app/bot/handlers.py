@@ -355,7 +355,21 @@ async def on_media(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await msg.reply_text(reply)
 
 
+async def on_error(update: object, ctx: ContextTypes.DEFAULT_TYPE):
+    """Never fail silently: log the traceback and tell the owner what broke,
+    so a handler exception surfaces instead of vanishing into a 200 ack."""
+    log.exception("handler error", exc_info=ctx.error)
+    try:
+        chat_id = getattr(getattr(update, "effective_chat", None), "id", None)
+        if chat_id is not None:
+            err = f"{type(ctx.error).__name__}: {ctx.error}"
+            await ctx.bot.send_message(chat_id, f"⚠️ Something broke handling that — {err[:300]}")
+    except Exception:
+        pass
+
+
 def register(app: Application):
+    app.add_error_handler(on_error)
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("today", cmd_today))
     app.add_handler(CommandHandler("plan", cmd_plan))
