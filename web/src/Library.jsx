@@ -12,6 +12,20 @@ const GraphModal = lazy(() => import('./GraphModal.jsx'))
 const AUTOSAVE_MS = 800
 const SEARCH_MS = 300
 
+// friendly timestamp: ISO -> "today · 18:29" / "yesterday" / "22 Aug".
+// Demo passes already-friendly strings, which fall through unchanged.
+function fmtWhen(v) {
+  if (!v) return ''
+  const d = new Date(v)
+  if (isNaN(d.getTime())) return v
+  const now = new Date()
+  const y = new Date(now); y.setDate(now.getDate() - 1)
+  const hhmm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (d.toDateString() === now.toDateString()) return `today · ${hhmm}`
+  if (d.toDateString() === y.toDateString()) return 'yesterday'
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short' })
+}
+
 function NoteRow({ n, active, onOpen }) {
   return (
     <button className={`lb-row ${active ? 'on' : ''}`} onClick={() => onOpen(n.id)}
@@ -21,7 +35,7 @@ function NoteRow({ n, active, onOpen }) {
         <span className="lb-row-title">{n.title}</span>
         <span className="lb-row-ex">{n.excerpt || 'Empty note'}</span>
       </span>
-      <span className="lb-row-meta anno">{n.updated}</span>
+      <span className="lb-row-meta anno">{fmtWhen(n.updated)}</span>
     </button>
   )
 }
@@ -213,7 +227,7 @@ export default function Library({ demo }) {
               <span className="lb-crumb anno">{crumb}</span>
               <span className="lb-doc-actions">
                 <span className="lb-doc-meta anno">
-                  {save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved ✓' : `Edited ${note.updated || ''}`}
+                  {save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved ✓' : `Edited ${fmtWhen(note.updated)}`}
                 </span>
                 <button className="lb-act" onClick={togglePin}
                   title={note.pinned ? 'Unpin' : 'Pin'} aria-label={note.pinned ? 'Unpin' : 'Pin'}>
