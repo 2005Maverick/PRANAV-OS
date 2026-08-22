@@ -178,6 +178,8 @@ async def on_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ------------------------------------------------------------- free text
 REPLAN_RE = re.compile(r"^replan\s*[:\-]\s*(.+)", re.I | re.S)
 CAPTURE_HINT = re.compile(r"^(save|note|idea|prompt|read)\s*[:\-]", re.I)
+# destination-aware note phrasing — routed to capture, parsed there
+NOTE_DEST_HINT = re.compile(r"^(note\s+(?:in|to|under)\s|add\s+.+?\s+note\b)", re.I)
 PLAYLIST_RE = re.compile(r"^playlist\s+for\s+(\w+)\s*[:\-]\s*(\S+)", re.I)
 
 
@@ -284,7 +286,7 @@ async def on_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply = lst
     elif (rem := await lists_fin.try_reminder(text)):
         reply = rem
-    elif CAPTURE_HINT.match(text) or ("http://" in low or "https://" in low):
+    elif CAPTURE_HINT.match(text) or NOTE_DEST_HINT.match(text) or ("http://" in low or "https://" in low):
         reply = await capture.capture_text(text)
     elif await db.fetchval(
             """SELECT id FROM nudges WHERE kind='closeout_prompt' AND response IS NULL

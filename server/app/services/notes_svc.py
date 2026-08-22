@@ -194,6 +194,28 @@ async def update_note(note_id: int, title: str | None = None,
     return True
 
 
+async def append_to_note(name: str, body_md: str) -> dict:
+    """Append text to the note whose title best matches `name`, creating it if
+    none matches. Exact (case-insensitive) title wins; otherwise the shortest
+    title that contains `name`. Returns {id, title, created}."""
+    await ensure_schema()
+    name = (name or "").strip()
+    addition = (body_md or "").strip()
+    row = await db.fetchrow(
+        "SELECT id, title, body_md FROM notes WHERE lower(title)=lower($1) LIMIT 1", name)
+    if not row and name:
+        row = await db.fetchrow(
+            "SELECT id, title, body_md FROM notes WHERE title ILIKE '%'||$1||'%' "
+            "ORDER BY length(title), updated_at DESC LIMIT 1", name)
+    if row:
+        sep = "\n\n" if (row["body_md"] or "").strip() else ""
+        await update_note(row["id"], body_md=(row["body_md"] or "") + sep + addition)
+        return {"id": row["id"], "title": row["title"], "created": False}
+    title = name[:200] or "Untitled"
+    nid = await create_note(title, addition, [])
+    return {"id": nid, "title": title, "created": True}
+
+
 async def set_pinned(note_id: int, pinned: bool) -> bool:
     res = await db.execute("UPDATE notes SET pinned=$2 WHERE id=$1", note_id, pinned)
     return res.endswith("1")

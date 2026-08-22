@@ -27,18 +27,25 @@ async def try_finance(text: str) -> str | None:
         category = (cat or {}).get("category", "other")
         if category not in ("food", "transport", "subscriptions", "shopping", "health", "education", "fun", "other"):
             category = "other"
-        await db.execute(
-            "INSERT INTO finance_entries (amount, category, note) VALUES ($1,$2,$3)",
-            amount, category, note[:200])
+        # Write into the SAME store the Money cockpit reads (money_txns), so a
+        # spend captured from the terminal shows up on the Money sheet.
+        from . import money_svc
+        acct = await money_svc.default_account_id()
+        await money_svc.add_txn(acct, "expense", amount, category=category, note=note[:200])
         month_total = await db.fetchval(
-            "SELECT COALESCE(SUM(amount),0) FROM finance_entries WHERE date_trunc('month', spent_on) = date_trunc('month', CURRENT_DATE)")
+            "SELECT COALESCE(SUM(amount),0) FROM money_txns "
+            "WHERE kind='expense' AND date_trunc('month', txn_date) = date_trunc('month', CURRENT_DATE)")
         return f"₹{amount:.0f} → {category}. This month: ₹{float(month_total):.0f}."
     m = SUB_RE.match(text.strip())
     if m:
-        await db.execute(
-            "INSERT INTO subscriptions (name, amount, period) VALUES ($1,$2,$3)",
-            m.group(1).strip()[:80], float(m.group(2)), (m.group(3) or "monthly").lower())
-        return f"Subscription tracked: {m.group(1).strip()} ₹{m.group(2)}/{(m.group(3) or 'monthly')}."
+        from . import money_svc
+        name, amt = m.group(1).strip()[:80], float(m.group(2))
+        period = (m.group(3) or "monthly").lower()
+        acct = await money_svc.default_account_id()
+        await money_svc.add_recurring(
+            name, "expense", amt, cadence=period, category="subscriptions",
+            account_id=acct, day_of_month=_now().day)
+        return f"Subscription tracked: {name} ₹{amt:.0f}/{period}. It's on your Money forecast now."
     return None
 
 

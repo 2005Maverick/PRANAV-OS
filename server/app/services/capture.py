@@ -5,6 +5,12 @@ from .. import db, llm
 
 URL_RE = re.compile(r"https?://\S+")
 
+# Destination-aware note capture — "note in/to/under <name>: <text>" or
+# "add [this] to [my] <name> note: <text>". The named note is found (fuzzy) or
+# created, and the text is appended. This is how you say WHERE it should go.
+NOTE_DEST_RE = re.compile(r"^note\s+(?:in|to|under)\s+(.+?)\s*[:>\-–]\s*(.+)$", re.I | re.S)
+ADD_NOTE_RE = re.compile(r"^add\s+(?:this\s+)?(?:to\s+)?(?:my\s+)?(.+?)\s+note\s*[:>\-–]?\s*(.+)$", re.I | re.S)
+
 SECTION_PREFIXES = {
     "note:": "note", "note :": "note",
     "idea:": "idea", "idea :": "idea",
@@ -19,6 +25,14 @@ async def capture_text(raw: str, tg_file_id: str | None = None) -> str:
     section = None
     body = raw.strip()
     explicit = False
+
+    # destination-aware note: append to (or create) a named note
+    dest = NOTE_DEST_RE.match(raw.strip()) or ADD_NOTE_RE.match(raw.strip())
+    if dest:
+        from . import notes_svc
+        res = await notes_svc.append_to_note(dest.group(1).strip(), dest.group(2).strip())
+        verb = "Started" if res["created"] else "Added to"
+        return f"{verb} the Library note → “{res['title']}”. Open it in the cockpit to edit."
 
     for prefix, sec in SECTION_PREFIXES.items():
         if lower.startswith(prefix):

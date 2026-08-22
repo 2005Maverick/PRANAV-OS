@@ -134,6 +134,26 @@ async def txns(account_id: int | None = None, month: str | None = None,
     return [_txn_row(r) for r in rows]
 
 
+async def default_account_id() -> int:
+    """The account bot-captured spends land in. Resolution order: the
+    `money_default_account` setting (if it still points at a real account) →
+    the first account by sort → else auto-create a Cash wallet. Guarantees a
+    valid account_id so terminal captures never fail the NOT NULL / FK."""
+    await ensure_schema()
+    pref = await db.get_setting("money_default_account")
+    if pref:
+        try:
+            exists = await db.fetchval("SELECT id FROM money_accounts WHERE id=$1", int(pref))
+        except (ValueError, TypeError):
+            exists = None
+        if exists:
+            return int(exists)
+    first = await db.fetchval("SELECT id FROM money_accounts ORDER BY sort, id LIMIT 1")
+    if first:
+        return int(first)
+    return await add_account("Cash", "cash", 0)
+
+
 async def add_txn(account_id: int, kind: str, amount: float, category: str | None = None,
                   payee: str | None = None, note: str | None = None, date: str | None = None,
                   transfer_account_id: int | None = None) -> int:

@@ -111,8 +111,9 @@ async def week_data(kind: str = "weekly") -> dict:
     }
     if kind == "monthly":
         fin = await db.fetch(
-            """SELECT category, SUM(amount) AS total FROM finance_entries
-               WHERE spent_on BETWEEN $1 AND $2 GROUP BY category ORDER BY total DESC""", start, end)
+            """SELECT category, SUM(amount) AS total FROM money_txns
+               WHERE kind='expense' AND txn_date BETWEEN $1 AND $2
+               GROUP BY category ORDER BY total DESC""", start, end)
         out["finance"] = [dict(r) for r in fin]
     return out
 
