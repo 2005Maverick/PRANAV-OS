@@ -91,10 +91,28 @@ async def capture_text(raw: str, tg_file_id: str | None = None) -> str:
         raw[:2000], tg_file_id, section, "library", item_id,
     )
 
-    nice = {"note": "Notes", "idea": "Ideas", "prompt": "Prompt vault", "reading": "Reading queue",
-            "reel": "Reels", "file": "Files", "meeting": "Meetings"}[section]
-    extra = " — it'll resurface in your reading slot" if section == "reading" else ""
-    return f"Saved → {nice}: “{title}”{extra}."
+    # Also file into Decks so it's actually visible on the site (library_items
+    # above still drives resurfacing + the weekly review). Best-effort.
+    DECK_MAP = {"note": ("Notes", "note"), "idea": ("Ideas", "note"),
+                "prompt": ("Prompts", "prompt"), "reading": ("Links", "link"),
+                "reel": ("Links", "link"), "file": ("Files", "note")}
+    deck_label = None
+    if section in DECK_MAP:
+        dname, ckind = DECK_MAP[section]
+        try:
+            from . import decks_svc
+            did = await decks_svc.find_or_create_deck(dname, domain_slug)
+            await decks_svc.create_card(did, ckind, title=title, body=body,
+                                        url=url_m.group(0) if url_m else None)
+            deck_label = dname
+        except Exception:
+            pass
+
+    where = f"Decks · {deck_label}" if deck_label else {
+        "note": "Notes", "idea": "Ideas", "prompt": "Prompts", "reading": "Links",
+        "reel": "Reels", "file": "Files", "meeting": "Meetings"}[section]
+    extra = " — it'll also resurface in your reading slot" if section == "reading" else ""
+    return f"Saved → {where}: “{title}”{extra}."
 
 
 async def capture_media(kind: str, tg_file_id: str, caption: str | None) -> str:

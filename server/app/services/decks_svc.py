@@ -56,6 +56,14 @@ async def list_decks() -> list[dict]:
     return [{"id": r["id"], "name": r["name"], "domain": r["domain"], "count": r["n"]} for r in rows]
 
 
+async def find_or_create_deck(name: str, domain: str | None = None) -> int:
+    """Get the deck named `name` (case-insensitive), creating it if absent.
+    Lets bot captures auto-file into a stable set of decks."""
+    await ensure_schema()
+    did = await db.fetchval("SELECT id FROM decks WHERE lower(name)=lower($1) LIMIT 1", name)
+    return did or await create_deck(name, domain)
+
+
 async def create_deck(name: str, domain: str | None = None) -> int:
     nxt = await db.fetchval("SELECT COALESCE(MAX(sort),-1)+1 FROM decks")
     return await db.fetchval(
