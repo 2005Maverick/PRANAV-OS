@@ -61,12 +61,25 @@ async def try_lists(text: str) -> str | None:
                 "INSERT INTO lists (name) VALUES ($1) RETURNING id", name)
         await db.execute("INSERT INTO list_items (list_id, text) VALUES ($1,$2)", lid, item[:200])
         n = await db.fetchval("SELECT COUNT(*) FROM list_items WHERE list_id=$1 AND NOT checked", lid)
-        return f"Added to “{name}” — {n} item{'s' if n != 1 else ''} on it."
+        # mirror into Decks so the list is visible on the site (list_items still
+        # drives weekly list firing); best-effort.
+        try:
+            from . import decks_svc
+            did = await decks_svc.find_or_create_deck(name.title())
+            await decks_svc.create_card(did, "note", title=item[:200])
+        except Exception:
+            pass
+        return f"Added to “{name}” — {n} item{'s' if n != 1 else ''} on it. It's a deck on the site."
     m = LIST_NEW_RE.match(t)
     if m:
         name = m.group(1).strip().lower()
         await db.execute("INSERT INTO lists (name) VALUES ($1)", name)
-        return f"List “{name}” created. Add with: add <thing> to {name} list. Set when it fires from the cockpit Lists page."
+        try:
+            from . import decks_svc
+            await decks_svc.find_or_create_deck(name.title())
+        except Exception:
+            pass
+        return f"List “{name}” created — it's a deck on the site. Add with: add <thing> to {name} list."
     m = LIST_SHOW_RE.match(t)
     if m:
         name = m.group(1).strip().lower()
