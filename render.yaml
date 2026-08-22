@@ -35,3 +35,18 @@ services:
         generateValue: true
       - key: TICK_KEY
         generateValue: true
+
+  # The cockpit — static React build, talks to the API service above.
+  - type: web
+    name: pranav-os-cockpit
+    runtime: static
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API
+        value: https://pranav-os.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
